@@ -21,10 +21,12 @@ added by the plugin.
 
 * SourceMod 1.10
 * [DHooks with Detour Support](https://forums.alliedmods.net/showpost.php?p=2588686&postcount=589)
+* [MemoryPatch](https://github.com/Kenzzer/MemoryPatch) (compile only)
 
 ## ConVars
 
 * `sv_enablebunnyhopping ( def. "1" )` - Allow player speed to exceed maximum running speed
 * `sv_autobunnyhopping ( def. "1" )` - Players automatically re-jump while holding jump button
+* `sv_duckbunnyhopping ( def. "1" )` - Allow jumping while ducked
 
 It is recommended to set `sv_airaccelerate` to at least `150` if you intend to use this plugin.

@@ -16,6 +16,28 @@
 				"linux"		"@_ZNK9CTFPlayer10CanAirDashEv"
 				"windows"	"\x2A\x2A\x2A\x2A\x2A\x2A\x57\x8B\xF9\xF7\x87\x84\x1A\x00\x00\x00\x00\x04\x00"
 			}
+			"CTFGameMovement::CheckJumpButton"
+			{
+				"library"	"server"
+				"linux"		"@_ZN15CTFGameMovement15CheckJumpButtonEv"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x0C\x57\x8B\xF9\x8B\x47\x04\x80\xB8\x54\x0A\x00\x00\x00"
+			}
+		}
+		"Addresses"
+		{
+			"MemoryPatch_AllowDuckJump"
+			{
+				"linux"
+				{
+					"signature"	"CTFGameMovement::CheckJumpButton"
+					"offset"	"204"	// CTFGameMovement::CheckJumpButton+CC
+				}
+				"windows"
+				{
+					"signature"	"CTFGameMovement::CheckJumpButton"
+					"offset"	"499"	// CTFGameMovement::CheckJumpButton+1F3
+				}
+			}
 		}
 		"Functions"
 		{
@@ -25,6 +47,14 @@
 				"callconv"	"thiscall"
 				"return"	"void"
 				"this"		"ignore"
+			}
+		}
+		"Keys"
+		{
+			"MemoryPatch_AllowDuckJump"
+			{
+				"linux"		"\xEB"	// jz short -> jmp short
+				"windows"	"\xEB"	// jz short -> jmp short
 			}
 		}
 	}
