@@ -15,6 +15,7 @@ added by the plugin.
 * Unlimited speed while bunnyhopping
     * Prevents `CTFGameMovement::PreventBunnyJumping` from getting called
 * Support for multiple jumps in mid-air (e.g. Scout's air dash, halloween spells, etc.)
+    * Fully compatible with my [all-class air dash](https://github.com/Mikusch/air-dash) plugin
 
 ## Dependencies
 
