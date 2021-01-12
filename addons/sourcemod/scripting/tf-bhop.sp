@@ -69,6 +69,10 @@ public void OnPluginStart()
 		if (g_SDKCallCanAirDash == null)
 			SetFailState("Failed to create SDKCall for function CTFPlayer::CanAirDash");
 	}
+	else
+	{
+		SetFailState("Failed to find signature for function CTFPlayer::CanAirDash");
+	}
 	
 	delete gamedata;
 }
@@ -83,7 +87,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		{
 			if (buttons & IN_JUMP)
 			{
-				if (g_InJumpRelease[client] && !CanAirDash(client))
+				if (g_InJumpRelease[client] && CanAirDash(client))
 				{
 					g_InJumpRelease[client] = false;
 				}
@@ -91,10 +95,9 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				{
 					buttons &= ~IN_JUMP;
 					SetEntityFlags(client, flags & ~FL_DUCKING);
-					g_InJumpRelease[client] = false;
 				}
 			}
-			else if (!CanAirDash(client))
+			else if (CanAirDash(client))
 			{
 				g_InJumpRelease[client] = true;
 			}
