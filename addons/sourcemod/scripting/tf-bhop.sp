@@ -17,6 +17,7 @@
 
 #include <sourcemod>
 #include <dhooks>
+#include <memorypatch>
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -31,9 +32,11 @@ enum
 
 ConVar sv_enablebunnyhopping;
 ConVar sv_autobunnyhopping;
+ConVar sv_duckbunnyhopping;
 
 DynamicDetour g_DHookPreventBunnyJumping;
 Handle g_SDKCallCanAirDash;
+MemoryPatch g_MemoryPatchAllowDuck;
 
 bool g_InJumpRelease[MAXPLAYERS + 1];
 
@@ -42,7 +45,7 @@ public Plugin myinfo =
 	name = "Team Fortress 2 Bunnyhop", 
 	author = "Mikusch", 
 	description = "Simply TF2 bunnyhopping plugin", 
-	version = "v1.0", 
+	version = "v1.1", 
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
@@ -50,6 +53,8 @@ public void OnPluginStart()
 {
 	sv_enablebunnyhopping = CreateConVar("sv_enablebunnyhopping", "1", "Allow player speed to exceed maximum running speed", FCVAR_REPLICATED, true, 0.0, true, 1.0);
 	sv_autobunnyhopping = CreateConVar("sv_autobunnyhopping", "1", "Players automatically re-jump while holding jump button", FCVAR_REPLICATED, true, 0.0, true, 1.0);
+	sv_duckbunnyhopping = CreateConVar("sv_duckbunnyhopping", "1", "Allow jumping while ducked", FCVAR_REPLICATED, true, 0.0, true, 1.0);
+	sv_duckbunnyhopping.AddChangeHook(ConVarChanged_DuckBunnyhopping);
 	
 	GameData gamedata = new GameData("tf-bhop");
 	if (gamedata == null)
@@ -74,7 +79,19 @@ public void OnPluginStart()
 		SetFailState("Failed to find signature for function CTFPlayer::CanAirDash");
 	}
 	
+	MemoryPatch.SetGameData(gamedata);
+	
+	g_MemoryPatchAllowDuck = new MemoryPatch("MemoryPatch_AllowDuckJump");
+	if (g_MemoryPatchAllowDuck != null)
+		g_MemoryPatchAllowDuck.Enable();
+	
 	delete gamedata;
+}
+
+public void OnPluginEnd()
+{
+	if (g_MemoryPatchAllowDuck != null)
+		g_MemoryPatchAllowDuck.Disable();
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
@@ -94,7 +111,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				else if (!g_InJumpRelease[client] && GetWaterLevel(client) < WL_Waist)
 				{
 					buttons &= ~IN_JUMP;
-					SetEntityFlags(client, flags & ~FL_DUCKING);
 				}
 			}
 			else if (CanAirDash(client))
@@ -106,6 +122,20 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		{
 			g_InJumpRelease[client] = false;
 		}
+	}
+}
+
+public void ConVarChanged_DuckBunnyhopping(ConVar convar, const char[] oldValue, const char[] newValue)
+{
+	if (convar.BoolValue)
+	{
+		if (g_MemoryPatchAllowDuck != null)
+			g_MemoryPatchAllowDuck.Enable();
+	}
+	else
+	{
+		if (g_MemoryPatchAllowDuck != null)
+			g_MemoryPatchAllowDuck.Disable();
 	}
 }
 
