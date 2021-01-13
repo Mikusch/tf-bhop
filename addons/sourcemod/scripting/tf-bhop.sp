@@ -16,7 +16,7 @@
  */
 
 #include <sourcemod>
-#include <dhooks>
+#include <sdktools>
 #include <memorypatch>
 
 #pragma semicolon 1
@@ -35,7 +35,8 @@ ConVar sv_autobunnyhopping;
 ConVar sv_duckbunnyhopping;
 
 Handle g_SDKCallCanAirDash;
-MemoryPatch g_MemoryPatchAllowDuckJump;
+MemoryPatch g_MemoryPatchAllowDuckJumping;
+MemoryPatch g_MemoryPatchPreventBunnyJumping;
 
 bool g_InJumpRelease[MAXPLAYERS + 1];
 
@@ -44,13 +45,14 @@ public Plugin myinfo =
 	name = "Team Fortress 2 Bunnyhop", 
 	author = "Mikusch", 
 	description = "Simple TF2 bunnyhopping plugin", 
-	version = "1.1.0", 
+	version = "1.2.0", 
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
 public void OnPluginStart()
 {
 	sv_enablebunnyhopping = CreateConVar("sv_enablebunnyhopping", "1", "Allow player speed to exceed maximum running speed", FCVAR_REPLICATED, true, 0.0, true, 1.0);
+	sv_enablebunnyhopping.AddChangeHook(ConVarChanged_PreventBunnyJumping);
 	sv_autobunnyhopping = CreateConVar("sv_autobunnyhopping", "1", "Players automatically re-jump while holding jump button", FCVAR_REPLICATED, true, 0.0, true, 1.0);
 	sv_duckbunnyhopping = CreateConVar("sv_duckbunnyhopping", "1", "Allow jumping while ducked", FCVAR_REPLICATED, true, 0.0, true, 1.0);
 	sv_duckbunnyhopping.AddChangeHook(ConVarChanged_DuckBunnyhopping);
@@ -58,12 +60,6 @@ public void OnPluginStart()
 	GameData gamedata = new GameData("tf-bhop");
 	if (gamedata == null)
 		SetFailState("Could not find tf-bhop gamedata");
-	
-	DynamicDetour detour = DynamicDetour.FromConf(gamedata, "CTFGameMovement::PreventBunnyJumping");
-	if (detour != null)
-		detour.Enable(Hook_Pre, DHookCallback_PreventBunnyJumpingPre);
-	else
-		LogError("Failed to create detour setup handle for function CTFGameMovement::PreventBunnyJumping");
 	
 	StartPrepSDKCall(SDKCall_Player);
 	if (PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::CanAirDash"))
@@ -80,19 +76,28 @@ public void OnPluginStart()
 	
 	MemoryPatch.SetGameData(gamedata);
 	
-	g_MemoryPatchAllowDuckJump = new MemoryPatch("MemoryPatch_AllowDuckJump");
-	if (g_MemoryPatchAllowDuckJump != null)
-		g_MemoryPatchAllowDuckJump.Enable();
+	g_MemoryPatchAllowDuckJumping = new MemoryPatch("MemoryPatch_AllowDuckJumping");
+	if (g_MemoryPatchAllowDuckJumping != null)
+		g_MemoryPatchAllowDuckJumping.Enable();
 	else
-		LogError("Failed to create memory patch MemoryPatch_AllowDuckJump");
+		LogError("Failed to create memory patch MemoryPatch_AllowDuckJumping");
+	
+	g_MemoryPatchPreventBunnyJumping = new MemoryPatch("MemoryPatch_PreventBunnyJumping");
+	if (g_MemoryPatchPreventBunnyJumping != null)
+		g_MemoryPatchPreventBunnyJumping.Enable();
+	else
+		LogError("Failed to create memory patch MemoryPatch_PreventBunnyJumping");
 	
 	delete gamedata;
 }
 
 public void OnPluginEnd()
 {
-	if (g_MemoryPatchAllowDuckJump != null)
-		g_MemoryPatchAllowDuckJump.Disable();
+	if (g_MemoryPatchAllowDuckJumping != null)
+		g_MemoryPatchAllowDuckJumping.Disable();
+	
+	if (g_MemoryPatchPreventBunnyJumping != null)
+		g_MemoryPatchPreventBunnyJumping.Disable();
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
@@ -128,21 +133,24 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 
 public void ConVarChanged_DuckBunnyhopping(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	if (convar.BoolValue)
+	if (g_MemoryPatchAllowDuckJumping != null)
 	{
-		if (g_MemoryPatchAllowDuckJump != null)
-			g_MemoryPatchAllowDuckJump.Enable();
-	}
-	else
-	{
-		if (g_MemoryPatchAllowDuckJump != null)
-			g_MemoryPatchAllowDuckJump.Disable();
+		if (convar.BoolValue)
+			g_MemoryPatchAllowDuckJumping.Enable();
+		else
+			g_MemoryPatchAllowDuckJumping.Disable();
 	}
 }
 
-public MRESReturn DHookCallback_PreventBunnyJumpingPre()
+public void ConVarChanged_PreventBunnyJumping(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	return sv_enablebunnyhopping.BoolValue ? MRES_Supercede : MRES_Ignored;
+	if (g_MemoryPatchPreventBunnyJumping != null)
+	{
+		if (convar.BoolValue)
+			g_MemoryPatchPreventBunnyJumping.Enable();
+		else
+			g_MemoryPatchPreventBunnyJumping.Disable();
+	}
 }
 
 bool CanAirDash(int client)
