@@ -34,9 +34,8 @@ ConVar sv_enablebunnyhopping;
 ConVar sv_autobunnyhopping;
 ConVar sv_duckbunnyhopping;
 
-DynamicDetour g_DHookPreventBunnyJumping;
 Handle g_SDKCallCanAirDash;
-MemoryPatch g_MemoryPatchAllowDuck;
+MemoryPatch g_MemoryPatchAllowDuckJump;
 
 bool g_InJumpRelease[MAXPLAYERS + 1];
 
@@ -44,8 +43,8 @@ public Plugin myinfo =
 {
 	name = "Team Fortress 2 Bunnyhop", 
 	author = "Mikusch", 
-	description = "Simply TF2 bunnyhopping plugin", 
-	version = "v1.1", 
+	description = "Simple TF2 bunnyhopping plugin", 
+	version = "1.1.0", 
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
@@ -60,11 +59,11 @@ public void OnPluginStart()
 	if (gamedata == null)
 		SetFailState("Could not find tf-bhop gamedata");
 	
-	g_DHookPreventBunnyJumping = DynamicDetour.FromConf(gamedata, "CTFGameMovement::PreventBunnyJumping");
-	if (g_DHookPreventBunnyJumping != null)
-		g_DHookPreventBunnyJumping.Enable(Hook_Pre, DHookCallback_PreventBunnyJumpingPre);
+	DynamicDetour detour = DynamicDetour.FromConf(gamedata, "CTFGameMovement::PreventBunnyJumping");
+	if (detour != null)
+		detour.Enable(Hook_Pre, DHookCallback_PreventBunnyJumpingPre);
 	else
-		SetFailState("Failed to create detour setup handle for function CTFGameMovement::PreventBunnyJumping");
+		LogError("Failed to create detour setup handle for function CTFGameMovement::PreventBunnyJumping");
 	
 	StartPrepSDKCall(SDKCall_Player);
 	if (PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::CanAirDash"))
@@ -72,26 +71,28 @@ public void OnPluginStart()
 		PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
 		g_SDKCallCanAirDash = EndPrepSDKCall();
 		if (g_SDKCallCanAirDash == null)
-			SetFailState("Failed to create SDKCall for function CTFPlayer::CanAirDash");
+			LogError("Failed to create SDKCall handle for function CTFPlayer::CanAirDash");
 	}
 	else
 	{
-		SetFailState("Failed to find signature for function CTFPlayer::CanAirDash");
+		LogError("Failed to find signature for function CTFPlayer::CanAirDash");
 	}
 	
 	MemoryPatch.SetGameData(gamedata);
 	
-	g_MemoryPatchAllowDuck = new MemoryPatch("MemoryPatch_AllowDuckJump");
-	if (g_MemoryPatchAllowDuck != null)
-		g_MemoryPatchAllowDuck.Enable();
+	g_MemoryPatchAllowDuckJump = new MemoryPatch("MemoryPatch_AllowDuckJump");
+	if (g_MemoryPatchAllowDuckJump != null)
+		g_MemoryPatchAllowDuckJump.Enable();
+	else
+		LogError("Failed to create memory patch MemoryPatch_AllowDuckJump");
 	
 	delete gamedata;
 }
 
 public void OnPluginEnd()
 {
-	if (g_MemoryPatchAllowDuck != null)
-		g_MemoryPatchAllowDuck.Disable();
+	if (g_MemoryPatchAllowDuckJump != null)
+		g_MemoryPatchAllowDuckJump.Disable();
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
@@ -129,13 +130,13 @@ public void ConVarChanged_DuckBunnyhopping(ConVar convar, const char[] oldValue,
 {
 	if (convar.BoolValue)
 	{
-		if (g_MemoryPatchAllowDuck != null)
-			g_MemoryPatchAllowDuck.Enable();
+		if (g_MemoryPatchAllowDuckJump != null)
+			g_MemoryPatchAllowDuckJump.Enable();
 	}
 	else
 	{
-		if (g_MemoryPatchAllowDuck != null)
-			g_MemoryPatchAllowDuck.Disable();
+		if (g_MemoryPatchAllowDuckJump != null)
+			g_MemoryPatchAllowDuckJump.Disable();
 	}
 }
 
