@@ -1,17 +1,15 @@
-# Team Fortress 2 Bunnyhop
+# Team Fortress 2 Bunnyhopping
 
 This is a simple SourceMod plugin that allows players to bunnyhop in Team Fortress 2.
 
-It is different to most other bunnyhop plugins, as it allows you to re-jump before the engine zeroes out
-your z-velocity. This makes bunnyhopping feel incedibly smooth, since no speed is lost and no velocity needs to be manually
-added by the plugin.
+Unlike most other bunnyhop plugins, this implementation makes you jump before the engine zeroes out your z-velocity, preserving 100% of your speed and making each jump feel buttery smooth.
 
 ## Features
 
-* Smooth auto-bhop by holding down the jump button
+* Smooth auto-bunnyhopping by holding down the jump button
     * No speed loss on a successful jump
     * Works well even with high ping
-    * Allows crouch-bhopping
+    * Allows jumping while ducked
 * Unlimited speed while bunnyhopping
     * Prevents `CTFGameMovement::PreventBunnyJumping` from getting called
 * Support for multiple jumps in mid-air (e.g. Scout's air dash, halloween spells, etc.)
@@ -20,7 +18,6 @@ added by the plugin.
 ## Dependencies
 
 * SourceMod 1.10
-* [DHooks with Detour Support](https://forums.alliedmods.net/showpost.php?p=2588686&postcount=589)
 * [MemoryPatch](https://github.com/Kenzzer/MemoryPatch) (compile only)
 
 ## ConVars

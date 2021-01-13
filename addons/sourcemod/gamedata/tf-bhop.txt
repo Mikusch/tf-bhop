@@ -4,17 +4,11 @@
 	{
 		"Signatures"
 		{
-			"CTFGameMovement::PreventBunnyJumping"
-			{
-				"library"	"server"
-				"linux"		"@_ZN15CTFGameMovement19PreventBunnyJumpingEv"
-				"windows"	"\x56\x8B\xF1\x6A\x52\x8B\x8E\xA8\x07\x00\x00\x81\xC1\xB0\x19\x00\x00\xE8\x2A\x2A\x2A\x2A\x84\xC0\x75\x2A"
-			}
 			"CTFPlayer::CanAirDash"
 			{
 				"library"	"server"
 				"linux"		"@_ZNK9CTFPlayer10CanAirDashEv"
-				"windows"	"\x2A\x2A\x2A\x2A\x2A\x2A\x57\x8B\xF9\xF7\x87\x84\x1A\x00\x00\x00\x00\x04\x00"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x57\x8B\xF9\xF7\x87\x84\x1A\x00\x00\x00\x00\x04\x00"
 			}
 			"CTFGameMovement::CheckJumpButton"
 			{
@@ -22,10 +16,16 @@
 				"linux"		"@_ZN15CTFGameMovement15CheckJumpButtonEv"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x0C\x57\x8B\xF9\x8B\x47\x04\x80\xB8\x54\x0A\x00\x00\x00"
 			}
+			"CTFGameMovement::PreventBunnyJumping"
+			{
+				"library"	"server"
+				"linux"		"@_ZN15CTFGameMovement19PreventBunnyJumpingEv"
+				"windows"	"\x56\x8B\xF1\x6A\x52\x8B\x8E\xA8\x07\x00\x00\x81\xC1\xB0\x19\x00\x00\xE8\x2A\x2A\x2A\x2A\x84\xC0\x75\x2A"
+			}
 		}
 		"Addresses"
 		{
-			"MemoryPatch_AllowDuckJump"
+			"MemoryPatch_AllowDuckJumping"
 			{
 				"linux"
 				{
@@ -38,20 +38,28 @@
 					"offset"	"499"	// CTFGameMovement::CheckJumpButton+1F3
 				}
 			}
-		}
-		"Functions"
-		{
-			"CTFGameMovement::PreventBunnyJumping"
+			"MemoryPatch_AllowBunnyJumping"
 			{
-				"signature"	"CTFGameMovement::PreventBunnyJumping"
-				"callconv"	"thiscall"
-				"return"	"void"
-				"this"		"ignore"
+				"linux"
+				{
+					"signature"	"CTFGameMovement::PreventBunnyJumping"
+					"offset"	"39"	// CTFGameMovement::PreventBunnyJumping+27
+				}
+				"windows"
+				{
+					"signature"	"CTFGameMovement::PreventBunnyJumping"
+					"offset"	"24"	// CTFGameMovement::PreventBunnyJumping+18
+				}
 			}
 		}
 		"Keys"
 		{
-			"MemoryPatch_AllowDuckJump"
+			"MemoryPatch_AllowDuckJumping"
+			{
+				"linux"		"\xEB"	// jz short -> jmp short
+				"windows"	"\xEB"	// jz short -> jmp short
+			}
+			"MemoryPatch_AllowBunnyJumping"
 			{
 				"linux"		"\xEB"	// jz short -> jmp short
 				"windows"	"\xEB"	// jz short -> jmp short
