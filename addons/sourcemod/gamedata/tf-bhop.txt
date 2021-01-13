@@ -38,7 +38,7 @@
 					"offset"	"499"	// CTFGameMovement::CheckJumpButton+1F3
 				}
 			}
-			"MemoryPatch_PreventBunnyJumping"
+			"MemoryPatch_AllowBunnyJumping"
 			{
 				"linux"
 				{
@@ -59,7 +59,7 @@
 				"linux"		"\xEB"	// jz short -> jmp short
 				"windows"	"\xEB"	// jz short -> jmp short
 			}
-			"MemoryPatch_PreventBunnyJumping"
+			"MemoryPatch_AllowBunnyJumping"
 			{
 				"linux"		"\xEB"	// jz short -> jmp short
 				"windows"	"\xEB"	// jz short -> jmp short

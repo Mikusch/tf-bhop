@@ -36,7 +36,7 @@ ConVar sv_duckbunnyhopping;
 
 Handle g_SDKCallCanAirDash;
 MemoryPatch g_MemoryPatchAllowDuckJumping;
-MemoryPatch g_MemoryPatchPreventBunnyJumping;
+MemoryPatch g_MemoryPatchAllowBunnyJumping;
 
 bool g_InJumpRelease[MAXPLAYERS + 1];
 
@@ -75,18 +75,8 @@ public void OnPluginStart()
 	}
 	
 	MemoryPatch.SetGameData(gamedata);
-	
-	g_MemoryPatchAllowDuckJumping = new MemoryPatch("MemoryPatch_AllowDuckJumping");
-	if (g_MemoryPatchAllowDuckJumping != null)
-		g_MemoryPatchAllowDuckJumping.Enable();
-	else
-		LogError("Failed to create memory patch MemoryPatch_AllowDuckJumping");
-	
-	g_MemoryPatchPreventBunnyJumping = new MemoryPatch("MemoryPatch_PreventBunnyJumping");
-	if (g_MemoryPatchPreventBunnyJumping != null)
-		g_MemoryPatchPreventBunnyJumping.Enable();
-	else
-		LogError("Failed to create memory patch MemoryPatch_PreventBunnyJumping");
+	CreateMemoryPatch(g_MemoryPatchAllowDuckJumping, "MemoryPatch_AllowDuckJumping");
+	CreateMemoryPatch(g_MemoryPatchAllowBunnyJumping, "MemoryPatch_AllowBunnyJumping");
 	
 	delete gamedata;
 }
@@ -96,8 +86,8 @@ public void OnPluginEnd()
 	if (g_MemoryPatchAllowDuckJumping != null)
 		g_MemoryPatchAllowDuckJumping.Disable();
 	
-	if (g_MemoryPatchPreventBunnyJumping != null)
-		g_MemoryPatchPreventBunnyJumping.Disable();
+	if (g_MemoryPatchAllowBunnyJumping != null)
+		g_MemoryPatchAllowBunnyJumping.Disable();
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
@@ -144,13 +134,22 @@ public void ConVarChanged_DuckBunnyhopping(ConVar convar, const char[] oldValue,
 
 public void ConVarChanged_PreventBunnyJumping(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	if (g_MemoryPatchPreventBunnyJumping != null)
+	if (g_MemoryPatchAllowBunnyJumping != null)
 	{
 		if (convar.BoolValue)
-			g_MemoryPatchPreventBunnyJumping.Enable();
+			g_MemoryPatchAllowBunnyJumping.Enable();
 		else
-			g_MemoryPatchPreventBunnyJumping.Disable();
+			g_MemoryPatchAllowBunnyJumping.Disable();
 	}
+}
+
+void CreateMemoryPatch(MemoryPatch &handle, const char[] name)
+{
+	handle = new MemoryPatch(name);
+	if (handle != null)
+		handle.Enable();
+	else
+		LogError("Failed to create memory patch %s", name);
 }
 
 bool CanAirDash(int client)
