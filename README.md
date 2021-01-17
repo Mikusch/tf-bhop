@@ -12,7 +12,7 @@ Unlike most other bunnyhop plugins, this implementation makes you jump before th
     * Allows jumping while ducked
 * Unlimited speed while bunnyhopping
     * Prevents `CTFGameMovement::PreventBunnyJumping` from getting called
-* Support for multiple jumps in mid-air (e.g. Scout's air dash, halloween spells, etc.)
+* Support for TF2-specific actions in mid-air (e.g. Scout's air dash, B.A.S.E. Jumper parachute, etc.)
     * Fully compatible with my [all-class air dash](https://github.com/Mikusch/air-dash) plugin
 
 ## Dependencies

@@ -35,6 +35,7 @@ ConVar sv_autobunnyhopping;
 ConVar sv_duckbunnyhopping;
 
 Handle g_SDKCallCanAirDash;
+Handle g_SDKCallAttribHookValue;
 MemoryPatch g_MemoryPatchAllowDuckJumping;
 MemoryPatch g_MemoryPatchAllowBunnyJumping;
 
@@ -45,7 +46,7 @@ public Plugin myinfo =
 	name = "Team Fortress 2 Bunnyhop", 
 	author = "Mikusch", 
 	description = "Simple TF2 bunnyhopping plugin", 
-	version = "1.2.0", 
+	version = "1.3.0", 
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
@@ -74,6 +75,24 @@ public void OnPluginStart()
 		LogError("Failed to find signature for function CTFPlayer::CanAirDash");
 	}
 	
+	StartPrepSDKCall(SDKCall_Static);
+	if (PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CAttributeManager::AttribHookValue"))
+	{
+		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+		PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
+		PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
+		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain, VDECODE_FLAG_ALLOWNULL);
+		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+		PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+		g_SDKCallAttribHookValue = EndPrepSDKCall();
+		if (g_SDKCallAttribHookValue == null)
+			LogError("Failed to create SDKCall handle for function CAttributeManager::AttribHookValue");
+	}
+	else
+	{
+		LogError("Failed to find signature for function CAttributeManager::AttribHookValue");
+	}
+	
 	MemoryPatch.SetGameData(gamedata);
 	CreateMemoryPatch(g_MemoryPatchAllowDuckJumping, "MemoryPatch_AllowDuckJumping");
 	CreateMemoryPatch(g_MemoryPatchAllowBunnyJumping, "MemoryPatch_AllowBunnyJumping");
@@ -100,7 +119,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		{
 			if (buttons & IN_JUMP)
 			{
-				if (g_InJumpRelease[client] && CanAirDash(client))
+				if (g_InJumpRelease[client] && (CanAirDash(client) || CanDeployParachute(client)))
 				{
 					g_InJumpRelease[client] = false;
 				}
@@ -109,7 +128,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 					buttons &= ~IN_JUMP;
 				}
 			}
-			else if (CanAirDash(client))
+			else if (CanAirDash(client) || CanDeployParachute(client))
 			{
 				g_InJumpRelease[client] = true;
 			}
@@ -158,6 +177,30 @@ bool CanAirDash(int client)
 		return SDKCall(g_SDKCallCanAirDash, client);
 	else
 		return false;
+}
+
+any AttribHookValue(any value, const char[] attribHook, int entity, Address itemList = Address_Null, bool isGlobalConstString = false)
+{
+	if (g_SDKCallAttribHookValue != null)
+		return SDKCall(g_SDKCallAttribHookValue, value, attribHook, entity, itemList, isGlobalConstString);
+	else
+		return -1;
+}
+
+bool CanDeployParachute(int client)
+{
+	int parachute = 0;
+	parachute = AttribHookValue(parachute, "parachute_attribute", client);
+	if (parachute)
+	{
+		int parachuteDisabled = 0;
+		parachuteDisabled = AttribHookValue(parachuteDisabled, "parachute_disabled", client);
+		return !parachuteDisabled;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 int GetWaterLevel(int entity)
