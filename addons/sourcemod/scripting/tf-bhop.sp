@@ -194,10 +194,13 @@ bool CanDeployParachute(int client)
 	if (parachute)
 	{
 		int parachuteDisabled = 0;
-		return !AttribHookValue(parachuteDisabled, "parachute_disabled", client);
+		parachuteDisabled = AttribHookValue(parachuteDisabled, "parachute_disabled", client);
+		return !parachuteDisabled;
 	}
-	
-	return false;
+	else
+	{
+		return false;
+	}
 }
 
 int GetWaterLevel(int entity)
