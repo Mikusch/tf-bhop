@@ -179,10 +179,10 @@ bool CanAirDash(int client)
 		return false;
 }
 
-int AttribHookValue(int value, const char[] attribute, int entity, Address itemList = Address_Null, bool isGlobalConstString = false)
+any AttribHookValue(any value, const char[] attribHook, int entity, Address itemList = Address_Null, bool isGlobalConstString = false)
 {
 	if (g_SDKCallAttribHookValue != null)
-		return SDKCall(g_SDKCallAttribHookValue, value, attribute, entity, itemList, isGlobalConstString);
+		return SDKCall(g_SDKCallAttribHookValue, value, attribHook, entity, itemList, isGlobalConstString);
 	else
 		return -1;
 }
