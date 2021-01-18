@@ -46,21 +46,26 @@ public Plugin myinfo =
 	name = "Team Fortress 2 Bunnyhop", 
 	author = "Mikusch", 
 	description = "Simple TF2 bunnyhopping plugin", 
-	version = "1.3.0", 
+	version = "1.3.1", 
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
 public void OnPluginStart()
 {
-	sv_enablebunnyhopping = CreateConVar("sv_enablebunnyhopping", "1", "Allow player speed to exceed maximum running speed", FCVAR_REPLICATED, true, 0.0, true, 1.0);
+	if (GetEngineVersion() != Engine_TF2)
+		SetFailState("This plugin is only compatible with Team Fortress 2");
+	
+	sv_enablebunnyhopping = CreateConVar("sv_enablebunnyhopping", "1", "Allow player speed to exceed maximum running speed");
 	sv_enablebunnyhopping.AddChangeHook(ConVarChanged_PreventBunnyJumping);
-	sv_autobunnyhopping = CreateConVar("sv_autobunnyhopping", "1", "Players automatically re-jump while holding jump button", FCVAR_REPLICATED, true, 0.0, true, 1.0);
-	sv_duckbunnyhopping = CreateConVar("sv_duckbunnyhopping", "1", "Allow jumping while ducked", FCVAR_REPLICATED, true, 0.0, true, 1.0);
+	sv_autobunnyhopping = CreateConVar("sv_autobunnyhopping", "1", "Players automatically re-jump while holding jump button");
+	sv_duckbunnyhopping = CreateConVar("sv_duckbunnyhopping", "1", "Allow jumping while ducked");
 	sv_duckbunnyhopping.AddChangeHook(ConVarChanged_DuckBunnyhopping);
+	
+	AutoExecConfig();
 	
 	GameData gamedata = new GameData("tf-bhop");
 	if (gamedata == null)
-		SetFailState("Could not find tf-bhop gamedata");
+		SetFailState("Failed to load tf-bhop gamedata");
 	
 	StartPrepSDKCall(SDKCall_Player);
 	if (PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::CanAirDash"))
