@@ -40,13 +40,14 @@ MemoryPatch g_MemoryPatchAllowDuckJumping;
 MemoryPatch g_MemoryPatchAllowBunnyJumping;
 
 bool g_InJumpRelease[MAXPLAYERS + 1];
+bool g_InTriggerPush;
 
 public Plugin myinfo = 
 {
 	name = "Team Fortress 2 Bunnyhop", 
 	author = "Mikusch", 
 	description = "Simple TF2 bunnyhopping plugin", 
-	version = "1.3.1", 
+	version = "1.3.2", 
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
@@ -130,7 +131,14 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				}
 				else if (!g_InJumpRelease[client] && GetWaterLevel(client) < WL_Waist)
 				{
-					buttons &= ~IN_JUMP;
+					g_InTriggerPush = false;
+					
+					float origin[3];
+					GetClientAbsOrigin(client, origin);
+					TR_EnumerateEntities(origin, origin, PARTITION_TRIGGER_EDICTS, RayType_EndPoint, HitTrigger);
+					
+					if (!g_InTriggerPush)
+						buttons &= ~IN_JUMP;
 				}
 			}
 			else if (CanAirDash(client) || CanDeployParachute(client))
@@ -164,6 +172,24 @@ public void ConVarChanged_PreventBunnyJumping(ConVar convar, const char[] oldVal
 			g_MemoryPatchAllowBunnyJumping.Enable();
 		else
 			g_MemoryPatchAllowBunnyJumping.Disable();
+	}
+}
+
+public bool HitTrigger(int entity)
+{
+	char classname[16];
+	if (GetEntityClassname(entity, classname, sizeof(classname)) && StrEqual(classname, "trigger_push"))
+	{
+		Handle trace = TR_ClipCurrentRayToEntityEx(MASK_ALL, entity);
+		bool didHit = TR_DidHit(trace);
+		delete trace;
+		
+		g_InTriggerPush = didHit;
+		return !didHit;
+	}
+	else
+	{
+		return true;
 	}
 }
 
