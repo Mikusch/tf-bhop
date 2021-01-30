@@ -126,7 +126,7 @@ public void OnPluginEnd()
 
 public void OnClientPutInServer(int client)
 {
-	SDKHook(client, SDKHook_OnTakeDamage, SDKHook_OnClientTakeDamage);
+	SDKHook(client, SDKHook_OnTakeDamage, OnClientTakeDamage);
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
@@ -183,7 +183,7 @@ public void ConVarChanged_PreventBunnyJumping(ConVar convar, const char[] oldVal
 	}
 }
 
-public Action SDKHook_OnClientTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
+public Action OnClientTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
 {
 	if (sv_autobunnyhopping.BoolValue && !sv_autobunnyhopping_falldamage.BoolValue && g_IsBunnyHopping[victim] && (damagetype & DMG_FALL))
 	{
