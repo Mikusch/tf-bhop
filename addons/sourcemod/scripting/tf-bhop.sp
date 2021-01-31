@@ -17,6 +17,7 @@
 
 #include <sourcemod>
 #include <sdktools>
+#include <sdkhooks>
 #include <memorypatch>
 
 #pragma semicolon 1
@@ -32,6 +33,7 @@ enum
 
 ConVar sv_enablebunnyhopping;
 ConVar sv_autobunnyhopping;
+ConVar sv_autobunnyhopping_falldamage;
 ConVar sv_duckbunnyhopping;
 
 Handle g_SDKCallCanAirDash;
@@ -39,6 +41,7 @@ Handle g_SDKCallAttribHookValue;
 MemoryPatch g_MemoryPatchAllowDuckJumping;
 MemoryPatch g_MemoryPatchAllowBunnyJumping;
 
+bool g_IsBunnyHopping[MAXPLAYERS + 1];
 bool g_InJumpRelease[MAXPLAYERS + 1];
 
 public Plugin myinfo = 
@@ -46,7 +49,7 @@ public Plugin myinfo =
 	name = "Team Fortress 2 Bunnyhop", 
 	author = "Mikusch", 
 	description = "Simple TF2 bunnyhopping plugin", 
-	version = "1.3.1", 
+	version = "1.4.0", 
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
@@ -58,10 +61,17 @@ public void OnPluginStart()
 	sv_enablebunnyhopping = CreateConVar("sv_enablebunnyhopping", "1", "Allow player speed to exceed maximum running speed");
 	sv_enablebunnyhopping.AddChangeHook(ConVarChanged_PreventBunnyJumping);
 	sv_autobunnyhopping = CreateConVar("sv_autobunnyhopping", "1", "Players automatically re-jump while holding jump button");
+	sv_autobunnyhopping_falldamage = CreateConVar("sv_autobunnyhopping_falldamage", "0", "Players can take fall damage while auto-bunnyhopping");
 	sv_duckbunnyhopping = CreateConVar("sv_duckbunnyhopping", "1", "Allow jumping while ducked");
 	sv_duckbunnyhopping.AddChangeHook(ConVarChanged_DuckBunnyhopping);
 	
 	AutoExecConfig();
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client))
+			OnClientPutInServer(client);
+	}
 	
 	GameData gamedata = new GameData("tf-bhop");
 	if (gamedata == null)
@@ -114,13 +124,18 @@ public void OnPluginEnd()
 		g_MemoryPatchAllowBunnyJumping.Disable();
 }
 
+public void OnClientPutInServer(int client)
+{
+	SDKHook(client, SDKHook_OnTakeDamage, OnClientTakeDamage);
+}
+
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
 	if (sv_autobunnyhopping.BoolValue)
 	{
-		int flags = GetEntityFlags(client);
+		g_IsBunnyHopping[client] = false;
 		
-		if (!(flags & FL_ONGROUND))
+		if (!(GetEntityFlags(client) & FL_ONGROUND))
 		{
 			if (buttons & IN_JUMP)
 			{
@@ -130,6 +145,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				}
 				else if (!g_InJumpRelease[client] && GetWaterLevel(client) < WL_Waist)
 				{
+					g_IsBunnyHopping[client] = true;
 					buttons &= ~IN_JUMP;
 				}
 			}
@@ -165,6 +181,17 @@ public void ConVarChanged_PreventBunnyJumping(ConVar convar, const char[] oldVal
 		else
 			g_MemoryPatchAllowBunnyJumping.Disable();
 	}
+}
+
+public Action OnClientTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
+{
+	if (sv_autobunnyhopping.BoolValue && !sv_autobunnyhopping_falldamage.BoolValue && g_IsBunnyHopping[victim] && (damagetype & DMG_FALL))
+	{
+		damage = 0.0;
+		return Plugin_Changed;
+	}
+	
+	return Plugin_Continue;
 }
 
 void CreateMemoryPatch(MemoryPatch &handle, const char[] name)
