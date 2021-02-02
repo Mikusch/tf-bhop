@@ -49,7 +49,7 @@ public Plugin myinfo =
 	name = "Team Fortress 2 Bunnyhop", 
 	author = "Mikusch", 
 	description = "Simple TF2 bunnyhopping plugin", 
-	version = "1.4.0", 
+	version = "1.4.1", 
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
@@ -185,7 +185,7 @@ public void ConVarChanged_PreventBunnyJumping(ConVar convar, const char[] oldVal
 
 public Action OnClientTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
 {
-	if (sv_autobunnyhopping.BoolValue && !sv_autobunnyhopping_falldamage.BoolValue && g_IsBunnyHopping[victim] && (damagetype & DMG_FALL))
+	if (sv_autobunnyhopping.BoolValue && !sv_autobunnyhopping_falldamage.BoolValue && g_IsBunnyHopping[victim] && (attacker == 0) && (damagetype & DMG_FALL))
 	{
 		damage = 0.0;
 		return Plugin_Changed;
