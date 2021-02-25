@@ -18,6 +18,7 @@
 #include <sourcemod>
 #include <sdktools>
 #include <sdkhooks>
+#include <tf2_stocks>
 #include <memorypatch>
 
 #pragma semicolon 1
@@ -49,7 +50,7 @@ public Plugin myinfo =
 	name = "Team Fortress 2 Bunnyhop", 
 	author = "Mikusch", 
 	description = "Simple TF2 bunnyhopping plugin", 
-	version = "1.4.1", 
+	version = "1.4.2", 
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
@@ -143,7 +144,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				{
 					g_InJumpRelease[client] = false;
 				}
-				else if (!g_InJumpRelease[client] && GetWaterLevel(client) < WL_Waist)
+				else if (!g_InJumpRelease[client] && GetWaterLevel(client) < WL_Waist && !TF2_IsPlayerInCondition(client, TFCond_HalloweenGhostMode))
 				{
 					g_IsBunnyHopping[client] = true;
 					buttons &= ~IN_JUMP;
