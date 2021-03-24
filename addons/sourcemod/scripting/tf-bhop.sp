@@ -154,10 +154,10 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 					TR_EnumerateEntities(origin, origin, PARTITION_TRIGGER_EDICTS, RayType_EndPoint, HitTrigger);
 					
 					if (!g_InTriggerPush)
-          {
-            g_IsBunnyHopping[client] = true;
+					{
+						g_IsBunnyHopping[client] = true;
 						buttons &= ~IN_JUMP;
-          }
+					}
 				}
 			}
 			else if (CanAirDash(client) || CanDeployParachute(client))
