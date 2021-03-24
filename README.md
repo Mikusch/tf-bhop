@@ -28,6 +28,7 @@ The plugin creates the following console variables, configurable in `cfg/sourcem
 * `sv_enablebunnyhopping ( def. "1" )` - Allow player speed to exceed maximum running speed
 * `sv_autobunnyhopping ( def. "1" )` - Players automatically re-jump while holding jump button
 * `sv_duckbunnyhopping ( def. "1" )` - Allow jumping while ducked
+* `sv_autobunnyhopping_falldamage ( def. "0" )` - Players can take fall damage while auto-bunnyhopping
 
 ### Recommended Configuration
 
