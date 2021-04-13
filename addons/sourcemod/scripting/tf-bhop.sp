@@ -51,7 +51,7 @@ public Plugin myinfo =
 	name = "Team Fortress 2 Bunnyhop", 
 	author = "Mikusch", 
 	description = "Simple TF2 bunnyhopping plugin", 
-	version = "1.4.3", 
+	version = "1.4.4", 
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
@@ -210,17 +210,20 @@ public bool HitTrigger(int entity)
 	char classname[16];
 	if (GetEntityClassname(entity, classname, sizeof(classname)) && StrEqual(classname, "trigger_push"))
 	{
-		Handle trace = TR_ClipCurrentRayToEntityEx(MASK_ALL, entity);
-		bool didHit = TR_DidHit(trace);
-		delete trace;
-		
-		g_InTriggerPush = didHit;
-		return !didHit;
+		float pushdir[3];
+		GetEntPropVector(entity, Prop_Data, "m_vecPushDir", pushdir);
+		if (pushdir[2] > 0.0)
+		{
+			Handle trace = TR_ClipCurrentRayToEntityEx(MASK_ALL, entity);
+			bool didHit = TR_DidHit(trace);
+			delete trace;
+			
+			g_InTriggerPush = didHit;
+			return !didHit;
+		}
 	}
-	else
-	{
-		return true;
-	}
+	
+	return true;
 }
 
 void CreateMemoryPatch(MemoryPatch &handle, const char[] name)
