@@ -30,7 +30,7 @@ enum
 	WL_Feet, 
 	WL_Waist, 
 	WL_Eyes
-};
+}
 
 ConVar sv_enablebunnyhopping;
 ConVar sv_autobunnyhopping;
@@ -51,7 +51,7 @@ public Plugin myinfo =
 	name = "Team Fortress 2 Bunnyhop", 
 	author = "Mikusch", 
 	description = "Simple TF2 bunnyhopping plugin", 
-	version = "1.4.4", 
+	version = "1.4.5", 
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
@@ -76,7 +76,7 @@ public void OnPluginStart()
 	}
 	
 	GameData gamedata = new GameData("tf-bhop");
-	if (gamedata == null)
+	if (!gamedata)
 		SetFailState("Failed to load tf-bhop gamedata");
 	
 	StartPrepSDKCall(SDKCall_Player);
@@ -84,7 +84,7 @@ public void OnPluginStart()
 	{
 		PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
 		g_SDKCallCanAirDash = EndPrepSDKCall();
-		if (g_SDKCallCanAirDash == null)
+		if (!g_SDKCallCanAirDash)
 			LogError("Failed to create SDKCall handle for function CTFPlayer::CanAirDash");
 	}
 	else
@@ -102,7 +102,7 @@ public void OnPluginStart()
 		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
 		PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
 		g_SDKCallAttribHookValue = EndPrepSDKCall();
-		if (g_SDKCallAttribHookValue == null)
+		if (!g_SDKCallAttribHookValue)
 			LogError("Failed to create SDKCall handle for function CAttributeManager::AttribHookValue");
 	}
 	else
@@ -119,10 +119,10 @@ public void OnPluginStart()
 
 public void OnPluginEnd()
 {
-	if (g_MemoryPatchAllowDuckJumping != null)
+	if (g_MemoryPatchAllowDuckJumping)
 		g_MemoryPatchAllowDuckJumping.Disable();
 	
-	if (g_MemoryPatchAllowBunnyJumping != null)
+	if (g_MemoryPatchAllowBunnyJumping)
 		g_MemoryPatchAllowBunnyJumping.Disable();
 }
 
@@ -145,7 +145,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				{
 					g_InJumpRelease[client] = false;
 				}
-				else if (!g_InJumpRelease[client] && GetWaterLevel(client) < WL_Waist && !TF2_IsPlayerInCondition(client, TFCond_HalloweenGhostMode))
+				else if (!g_InJumpRelease[client] && !IsInAVehicle(client) && GetWaterLevel(client) < WL_Waist && !TF2_IsPlayerInCondition(client, TFCond_HalloweenGhostMode))
 				{
 					g_InTriggerPush = false;
 					
@@ -174,7 +174,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 
 public void ConVarChanged_DuckBunnyhopping(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	if (g_MemoryPatchAllowDuckJumping != null)
+	if (g_MemoryPatchAllowDuckJumping)
 	{
 		if (convar.BoolValue)
 			g_MemoryPatchAllowDuckJumping.Enable();
@@ -185,7 +185,7 @@ public void ConVarChanged_DuckBunnyhopping(ConVar convar, const char[] oldValue,
 
 public void ConVarChanged_PreventBunnyJumping(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	if (g_MemoryPatchAllowBunnyJumping != null)
+	if (g_MemoryPatchAllowBunnyJumping)
 	{
 		if (convar.BoolValue)
 			g_MemoryPatchAllowBunnyJumping.Enable();
@@ -229,7 +229,7 @@ public bool HitTrigger(int entity)
 void CreateMemoryPatch(MemoryPatch &handle, const char[] name)
 {
 	handle = new MemoryPatch(name);
-	if (handle != null)
+	if (handle)
 		handle.Enable();
 	else
 		LogError("Failed to create memory patch %s", name);
@@ -237,7 +237,7 @@ void CreateMemoryPatch(MemoryPatch &handle, const char[] name)
 
 bool CanAirDash(int client)
 {
-	if (g_SDKCallCanAirDash != null)
+	if (g_SDKCallCanAirDash)
 		return SDKCall(g_SDKCallCanAirDash, client);
 	else
 		return false;
@@ -245,7 +245,7 @@ bool CanAirDash(int client)
 
 any AttribHookValue(any value, const char[] attribHook, int entity, Address itemList = Address_Null, bool isGlobalConstString = false)
 {
-	if (g_SDKCallAttribHookValue != null)
+	if (g_SDKCallAttribHookValue)
 		return SDKCall(g_SDKCallAttribHookValue, value, attribHook, entity, itemList, isGlobalConstString);
 	else
 		return -1;
@@ -265,6 +265,11 @@ bool CanDeployParachute(int client)
 	{
 		return false;
 	}
+}
+
+bool IsInAVehicle(int client)
+{
+	return GetEntPropEnt(client, Prop_Send, "m_hVehicle") != -1;
 }
 
 int GetWaterLevel(int entity)
