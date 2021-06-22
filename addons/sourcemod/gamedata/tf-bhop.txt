@@ -36,12 +36,12 @@
 				"linux"
 				{
 					"signature"	"CTFGameMovement::CheckJumpButton"
-					"offset"	"204"	// CTFGameMovement::CheckJumpButton+CC
+					"offset"	"215"	// CTFGameMovement::CheckJumpButton+D7
 				}
 				"windows"
 				{
 					"signature"	"CTFGameMovement::CheckJumpButton"
-					"offset"	"499"	// CTFGameMovement::CheckJumpButton+1F3
+					"offset"	"507"	// CTFGameMovement::CheckJumpButton+1FB
 				}
 			}
 			"MemoryPatch_AllowBunnyJumping"
