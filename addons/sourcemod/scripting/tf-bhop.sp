@@ -51,7 +51,7 @@ public Plugin myinfo =
 	name = "Team Fortress 2 Bunnyhop", 
 	author = "Mikusch", 
 	description = "Simple TF2 bunnyhopping plugin", 
-	version = "1.4.6", 
+	version = "1.4.7", 
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
@@ -145,7 +145,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				{
 					g_InJumpRelease[client] = false;
 				}
-				else if (!g_InJumpRelease[client] && !IsInAVehicle(client) && GetWaterLevel(client) < WL_Waist && !TF2_IsPlayerInCondition(client, TFCond_HalloweenGhostMode))
+				else if (!g_InJumpRelease[client] && !IsInAVehicle(client) && GetWaterLevel(client) < WL_Waist && !TF2_IsPlayerInCondition(client, TFCond_HalloweenGhostMode) && !TF2_IsPlayerInCondition(client, TFCond_GrapplingHookLatched))
 				{
 					g_InTriggerPush = false;
 					

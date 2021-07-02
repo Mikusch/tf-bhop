@@ -13,7 +13,7 @@ preserving 100% of your speed and making each jump feel buttery smooth.
     * Allows jumping while ducked
 * Unlimited speed while bunnyhopping
     * Prevents `CTFGameMovement::PreventBunnyJumping` from clamping your speed
-* Support for TF2-specific actions in mid-air (e.g. Scout's air dash, B.A.S.E. Jumper parachute, etc.)
+* Support for TF2-specific actions in mid-air (e.g. Scout's air dash, B.A.S.E. Jumper parachute, grappling hooks, etc.)
     * Fully compatible with my [all-class air dash](https://github.com/Mikusch/air-dash) plugin
 
 ## Dependencies
