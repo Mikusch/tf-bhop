@@ -81,6 +81,9 @@ public void OnPluginStart()
 	{
 		if (IsClientInGame(client))
 			OnClientPutInServer(client);
+		
+		if (AreClientCookiesCached(client))
+			OnClientCookiesCached(client);
 	}
 	
 	GameData gamedata = new GameData("tf-bhop");
@@ -160,7 +163,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				{
 					g_InJumpRelease[client] = false;
 				}
-				else if (!g_InJumpRelease[client] && !g_IsAutobunnyHoppingDisabled[client] && !IsInAVehicle(client) && GetWaterLevel(client) < WL_Waist && !TF2_IsPlayerInCondition(client, TFCond_HalloweenGhostMode) && !TF2_IsPlayerInCondition(client, TFCond_GrapplingHookLatched))
+				else if (CanBunnyhop(client))
 				{
 					g_InTriggerPush = false;
 					
@@ -267,6 +270,16 @@ void CreateMemoryPatch(MemoryPatch &handle, const char[] name)
 		handle.Enable();
 	else
 		LogError("Failed to create memory patch %s", name);
+}
+
+bool CanBunnyhop(int client)
+{
+	return !g_IsAutobunnyHoppingDisabled[client]
+		&& !g_InJumpRelease[client]
+		&& !IsInAVehicle(client)
+		&& GetWaterLevel(client) < WL_Waist
+		&& !TF2_IsPlayerInCondition(client, TFCond_HalloweenGhostMode)
+		&& !TF2_IsPlayerInCondition(client, TFCond_GrapplingHookLatched);
 }
 
 bool CanAirDash(int client)
