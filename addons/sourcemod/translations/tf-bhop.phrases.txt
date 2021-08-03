@@ -1,0 +1,12 @@
+"Phrases"
+{
+	"Auto-bunnyhopping enabled"
+	{
+		"en"		"You will now automatically re-jump while holding the jump button."
+	}
+	
+	"Auto-bunnyhopping disabled"
+	{
+		"en"		"You will no longer automatically re-jump while holding the jump button."
+	}
+}
