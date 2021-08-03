@@ -55,7 +55,7 @@ public Plugin myinfo =
 	name = "Team Fortress 2 Bunnyhop", 
 	author = "Mikusch", 
 	description = "Simple TF2 bunnyhopping plugin", 
-	version = "1.4.7", 
+	version = "1.5.0", 
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
