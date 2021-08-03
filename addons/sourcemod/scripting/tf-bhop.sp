@@ -18,6 +18,7 @@
 #include <sourcemod>
 #include <sdktools>
 #include <sdkhooks>
+#include <clientprefs>
 #include <tf2_stocks>
 #include <memorypatch>
 
@@ -37,6 +38,8 @@ ConVar sv_autobunnyhopping;
 ConVar sv_autobunnyhopping_falldamage;
 ConVar sv_duckbunnyhopping;
 
+Cookie g_CookieAutoBunnyhoppingDisabled;
+
 Handle g_SDKCallCanAirDash;
 Handle g_SDKCallAttribHookValue;
 MemoryPatch g_MemoryPatchAllowDuckJumping;
@@ -44,6 +47,7 @@ MemoryPatch g_MemoryPatchAllowBunnyJumping;
 
 bool g_IsBunnyHopping[MAXPLAYERS + 1];
 bool g_InJumpRelease[MAXPLAYERS + 1];
+bool g_IsAutobunnyHoppingDisabled[MAXPLAYERS + 1];
 bool g_InTriggerPush;
 
 public Plugin myinfo = 
@@ -66,6 +70,10 @@ public void OnPluginStart()
 	sv_autobunnyhopping_falldamage = CreateConVar("sv_autobunnyhopping_falldamage", "0", "Players can take fall damage while auto-bunnyhopping");
 	sv_duckbunnyhopping = CreateConVar("sv_duckbunnyhopping", "1", "Allow jumping while ducked");
 	sv_duckbunnyhopping.AddChangeHook(ConVarChanged_DuckBunnyhopping);
+	
+	g_CookieAutoBunnyhoppingDisabled = new Cookie("autobunnyhopping_disabled", "Do not automatically re-jump while holding jump button", CookieAccess_Protected);
+	
+	RegConsoleCmd("sm_bhop", ConCmd_ToggleAutoBunnyhopping, "Toggle auto-bunnyhopping preference");
 	
 	AutoExecConfig();
 	
@@ -131,6 +139,13 @@ public void OnClientPutInServer(int client)
 	SDKHook(client, SDKHook_OnTakeDamage, OnClientTakeDamage);
 }
 
+public void OnClientDisconnect(int client)
+{
+	g_IsBunnyHopping[client] = false;
+	g_InJumpRelease[client] = false;
+	g_IsAutobunnyHoppingDisabled[client] = false;
+}
+
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
 	if (sv_autobunnyhopping.BoolValue)
@@ -145,7 +160,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				{
 					g_InJumpRelease[client] = false;
 				}
-				else if (!g_InJumpRelease[client] && !IsInAVehicle(client) && GetWaterLevel(client) < WL_Waist && !TF2_IsPlayerInCondition(client, TFCond_HalloweenGhostMode) && !TF2_IsPlayerInCondition(client, TFCond_GrapplingHookLatched))
+				else if (!g_InJumpRelease[client] && !g_IsAutobunnyHoppingDisabled[client] && !IsInAVehicle(client) && GetWaterLevel(client) < WL_Waist && !TF2_IsPlayerInCondition(client, TFCond_HalloweenGhostMode) && !TF2_IsPlayerInCondition(client, TFCond_GrapplingHookLatched))
 				{
 					g_InTriggerPush = false;
 					
@@ -172,6 +187,16 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	}
 }
 
+public void OnClientCookiesCached(int client)
+{
+	char value[8];
+	g_CookieAutoBunnyhoppingDisabled.Get(client, value, sizeof(value));
+	
+	bool result;
+	if (value[0] != '\0' && StringToIntEx(value, result) > 0)
+		g_IsAutobunnyHoppingDisabled[client] = result;
+}
+
 public void ConVarChanged_DuckBunnyhopping(ConVar convar, const char[] oldValue, const char[] newValue)
 {
 	if (g_MemoryPatchAllowDuckJumping)
@@ -192,6 +217,15 @@ public void ConVarChanged_PreventBunnyJumping(ConVar convar, const char[] oldVal
 		else
 			g_MemoryPatchAllowBunnyJumping.Disable();
 	}
+}
+
+public Action ConCmd_ToggleAutoBunnyhopping(int client, int args)
+{
+	g_IsAutobunnyHoppingDisabled[client] = !g_IsAutobunnyHoppingDisabled[client];
+	
+	char value[8];
+	if (IntToString(g_IsAutobunnyHoppingDisabled[client], value, sizeof(value)) > 0)
+		g_CookieAutoBunnyhoppingDisabled.Set(client, value);
 }
 
 public Action OnClientTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
