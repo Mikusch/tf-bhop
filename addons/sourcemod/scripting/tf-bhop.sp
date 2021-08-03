@@ -64,6 +64,8 @@ public void OnPluginStart()
 	if (GetEngineVersion() != Engine_TF2)
 		SetFailState("This plugin is only compatible with Team Fortress 2");
 	
+	LoadTranslations("tf-bhop.phrases");
+	
 	sv_enablebunnyhopping = CreateConVar("sv_enablebunnyhopping", "1", "Allow player speed to exceed maximum running speed");
 	sv_enablebunnyhopping.AddChangeHook(ConVarChanged_PreventBunnyJumping);
 	sv_autobunnyhopping = CreateConVar("sv_autobunnyhopping", "1", "Players automatically re-jump while holding jump button");
@@ -224,11 +226,13 @@ public void ConVarChanged_PreventBunnyJumping(ConVar convar, const char[] oldVal
 
 public Action ConCmd_ToggleAutoBunnyhopping(int client, int args)
 {
-	g_IsAutobunnyHoppingDisabled[client] = !g_IsAutobunnyHoppingDisabled[client];
+	bool value = g_IsAutobunnyHoppingDisabled[client] = !g_IsAutobunnyHoppingDisabled[client];
 	
-	char value[8];
-	if (IntToString(g_IsAutobunnyHoppingDisabled[client], value, sizeof(value)) > 0)
-		g_CookieAutoBunnyhoppingDisabled.Set(client, value);
+	char strValue[8];
+	if (IntToString(value, strValue, sizeof(strValue)) > 0)
+		g_CookieAutoBunnyhoppingDisabled.Set(client, strValue);
+	
+	ReplyToCommand(client, "%t", value ? "Auto-bunnyhopping disabled" : "Auto-bunnyhopping enabled");
 }
 
 public Action OnClientTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
