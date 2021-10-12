@@ -10,7 +10,7 @@
 				"linux"		"@_ZNK9CTFPlayer10CanAirDashEv"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x57\x8B\xF9\xF7\x87\x84\x1A\x00\x00\x00\x00\x04\x00"
 			}
-			"CAttributeManager::AttribHookValue"
+			"CAttributeManager::AttribHookValue<int>"
 			{
 				"library"	"server"
 				"linux"		"@_ZN17CAttributeManager15AttribHookValueIiEET_S1_PKcPK11CBaseEntityP10CUtlVectorIPS4_10CUtlMemoryIS8_iEEb"

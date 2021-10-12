@@ -106,17 +106,17 @@ public void OnPluginStart()
 	}
 	
 	StartPrepSDKCall(SDKCall_Static);
-	if (PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CAttributeManager::AttribHookValue"))
+	if (PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CAttributeManager::AttribHookValue<int>"))
 	{
 		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
 		PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
 		PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
-		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain, VDECODE_FLAG_ALLOWNULL);
 		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+		PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_Plain);
 		PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
 		g_SDKCallAttribHookValue = EndPrepSDKCall();
 		if (!g_SDKCallAttribHookValue)
-			LogError("Failed to create SDKCall handle for function CAttributeManager::AttribHookValue");
+			LogError("Failed to create SDKCall handle for function CAttributeManager::AttribHookValue<int>");
 	}
 	else
 	{
