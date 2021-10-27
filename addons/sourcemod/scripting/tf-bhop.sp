@@ -55,7 +55,7 @@ public Plugin myinfo =
 	name = "Team Fortress 2 Bunnyhop", 
 	author = "Mikusch", 
 	description = "Simple TF2 bunnyhopping plugin", 
-	version = "1.5.0", 
+	version = "1.5.1", 
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
@@ -190,6 +190,8 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			g_InJumpRelease[client] = false;
 		}
 	}
+	
+	return Plugin_Continue;
 }
 
 public void OnClientCookiesCached(int client)
@@ -233,6 +235,8 @@ public Action ConCmd_ToggleAutoBunnyhopping(int client, int args)
 		g_CookieAutoBunnyhoppingDisabled.Set(client, strValue);
 	
 	ReplyToCommand(client, "%t", value ? "Auto-bunnyhopping disabled" : "Auto-bunnyhopping enabled");
+	
+	return Plugin_Handled;
 }
 
 public Action OnClientTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
