@@ -18,7 +18,7 @@ preserving 100% of your speed and making each jump feel buttery smooth.
 
 ## Dependencies
 
-* SourceMod 1.10
+* SourceMod 1.10+
 * [MemoryPatch](https://github.com/Kenzzer/MemoryPatch) (compile only)
 
 ## ConVars
