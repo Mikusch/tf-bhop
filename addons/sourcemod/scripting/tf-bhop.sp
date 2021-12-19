@@ -52,10 +52,10 @@ bool g_InTriggerPush;
 
 public Plugin myinfo = 
 {
-	name = "Team Fortress 2 Bunnyhop", 
-	author = "Mikusch", 
-	description = "Simple TF2 bunnyhopping plugin", 
-	version = "1.5.1", 
+	name = "[TF2] Simple Bunnyhop",
+	author = "Mikusch",
+	description = "Simple TF2 bunnyhopping plugin",
+	version = "1.5.1",
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
