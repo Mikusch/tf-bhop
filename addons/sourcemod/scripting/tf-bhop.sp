@@ -27,9 +27,9 @@
 
 enum
 {
-	WL_NotInWater = 0, 
-	WL_Feet, 
-	WL_Waist, 
+	WL_NotInWater = 0,
+	WL_Feet,
+	WL_Waist,
 	WL_Eyes
 }
 
@@ -50,7 +50,7 @@ bool g_InJumpRelease[MAXPLAYERS + 1];
 bool g_IsAutobunnyHoppingDisabled[MAXPLAYERS + 1];
 bool g_InTriggerPush;
 
-public Plugin myinfo = 
+public Plugin myinfo =
 {
 	name = "[TF2] Simple Bunnyhop",
 	author = "Mikusch",
