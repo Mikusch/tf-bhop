@@ -200,7 +200,7 @@ public void OnClientCookiesCached(int client)
 	g_CookieAutoBunnyhoppingDisabled.Get(client, value, sizeof(value));
 	
 	bool result;
-	if (value[0] != '\0' && StringToIntEx(value, result) > 0)
+	if (value[0] != EOS && StringToIntEx(value, result) != 0)
 		g_IsAutobunnyHoppingDisabled[client] = result;
 }
 
