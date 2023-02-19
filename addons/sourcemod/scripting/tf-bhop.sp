@@ -20,6 +20,7 @@
 #include <sdkhooks>
 #include <clientprefs>
 #include <tf2_stocks>
+#include <tf2attributes>
 #include <memorypatch>
 
 #pragma semicolon 1
@@ -41,7 +42,6 @@ ConVar sv_duckbunnyhopping;
 Cookie g_CookieAutoBunnyhoppingDisabled;
 
 Handle g_SDKCallCanAirDash;
-Handle g_SDKCallAttribHookValue;
 MemoryPatch g_MemoryPatchAllowDuckJumping;
 MemoryPatch g_MemoryPatchAllowBunnyJumping;
 
@@ -55,7 +55,7 @@ public Plugin myinfo =
 	name = "[TF2] Simple Bunnyhop",
 	author = "Mikusch",
 	description = "Simple TF2 bunnyhopping plugin",
-	version = "1.5.2",
+	version = "1.6.0",
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
@@ -95,7 +95,7 @@ public void OnPluginStart()
 	StartPrepSDKCall(SDKCall_Player);
 	if (PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::CanAirDash"))
 	{
-		PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
+		PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_ByValue);
 		g_SDKCallCanAirDash = EndPrepSDKCall();
 		if (!g_SDKCallCanAirDash)
 			LogError("Failed to create SDKCall handle for function CTFPlayer::CanAirDash");
@@ -103,24 +103,6 @@ public void OnPluginStart()
 	else
 	{
 		LogError("Failed to find signature for function CTFPlayer::CanAirDash");
-	}
-	
-	StartPrepSDKCall(SDKCall_Static);
-	if (PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CAttributeManager::AttribHookValue<int>"))
-	{
-		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-		PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
-		PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
-		PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-		PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_Plain);
-		PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
-		g_SDKCallAttribHookValue = EndPrepSDKCall();
-		if (!g_SDKCallAttribHookValue)
-			LogError("Failed to create SDKCall handle for function CAttributeManager::AttribHookValue<int>");
-	}
-	else
-	{
-		LogError("Failed to find signature for function CAttributeManager::AttribHookValue");
 	}
 	
 	MemoryPatch.SetGameData(gamedata);
@@ -204,7 +186,7 @@ public void OnClientCookiesCached(int client)
 		g_IsAutobunnyHoppingDisabled[client] = result;
 }
 
-public void ConVarChanged_DuckBunnyhopping(ConVar convar, const char[] oldValue, const char[] newValue)
+void ConVarChanged_DuckBunnyhopping(ConVar convar, const char[] oldValue, const char[] newValue)
 {
 	if (g_MemoryPatchAllowDuckJumping)
 	{
@@ -215,7 +197,7 @@ public void ConVarChanged_DuckBunnyhopping(ConVar convar, const char[] oldValue,
 	}
 }
 
-public void ConVarChanged_PreventBunnyJumping(ConVar convar, const char[] oldValue, const char[] newValue)
+void ConVarChanged_PreventBunnyJumping(ConVar convar, const char[] oldValue, const char[] newValue)
 {
 	if (g_MemoryPatchAllowBunnyJumping)
 	{
@@ -226,7 +208,7 @@ public void ConVarChanged_PreventBunnyJumping(ConVar convar, const char[] oldVal
 	}
 }
 
-public Action ConCmd_ToggleAutoBunnyhopping(int client, int args)
+Action ConCmd_ToggleAutoBunnyhopping(int client, int args)
 {
 	bool value = g_IsAutobunnyHoppingDisabled[client] = !g_IsAutobunnyHoppingDisabled[client];
 	
@@ -239,7 +221,7 @@ public Action ConCmd_ToggleAutoBunnyhopping(int client, int args)
 	return Plugin_Handled;
 }
 
-public Action OnClientTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
+Action OnClientTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
 {
 	if (sv_autobunnyhopping.BoolValue && !sv_autobunnyhopping_falldamage.BoolValue && g_IsBunnyHopping[victim] && (attacker == 0) && (damagetype & DMG_FALL))
 	{
@@ -250,14 +232,14 @@ public Action OnClientTakeDamage(int victim, int &attacker, int &inflictor, floa
 	return Plugin_Continue;
 }
 
-public bool HitTrigger(int entity)
+bool HitTrigger(int entity)
 {
 	char classname[16];
 	if (GetEntityClassname(entity, classname, sizeof(classname)) && StrEqual(classname, "trigger_push"))
 	{
-		float pushdir[3];
-		GetEntPropVector(entity, Prop_Data, "m_vecPushDir", pushdir);
-		if (pushdir[2] > 0.0)
+		float pushDir[3];
+		GetEntPropVector(entity, Prop_Data, "m_vecPushDir", pushDir);
+		if (pushDir[2] > 0.0)
 		{
 			Handle trace = TR_ClipCurrentRayToEntityEx(MASK_ALL, entity);
 			bool didHit = TR_DidHit(trace);
@@ -284,8 +266,9 @@ bool CanBunnyhop(int client)
 {
 	return !g_IsAutobunnyHoppingDisabled[client]
 		&& !g_InJumpRelease[client]
-		&& !IsInAVehicle(client)
-		&& GetWaterLevel(client) < WL_Waist
+		&& GetEntPropEnt(client, Prop_Send, "m_hVehicle") == -1
+		&& GetEntProp(client, Prop_Data, "m_nWaterLevel") < WL_Waist
+		&& GetEntityMoveType(client) != MOVETYPE_NONE
 		&& !TF2_IsPlayerInCondition(client, TFCond_HalloweenGhostMode)
 		&& !TF2_IsPlayerInCondition(client, TFCond_GrapplingHookLatched);
 }
@@ -298,36 +281,18 @@ bool CanAirDash(int client)
 		return false;
 }
 
-any AttribHookValue(any value, const char[] attribHook, int entity, Address itemList = Address_Null, bool isGlobalConstString = false)
-{
-	if (g_SDKCallAttribHookValue)
-		return SDKCall(g_SDKCallAttribHookValue, value, attribHook, entity, itemList, isGlobalConstString);
-	else
-		return -1;
-}
-
 bool CanDeployParachute(int client)
 {
 	int parachute = 0;
-	parachute = AttribHookValue(parachute, "parachute_attribute", client);
+	parachute = TF2Attrib_HookValueInt(parachute, "parachute_attribute", client);
 	if (parachute)
 	{
-		int parachuteDisabled = 0;
-		parachuteDisabled = AttribHookValue(parachuteDisabled, "parachute_disabled", client);
-		return !parachuteDisabled;
+		int parachute_disabled = 0;
+		parachute_disabled = TF2Attrib_HookValueInt(parachute_disabled, "parachute_disabled", client);
+		return !parachute_disabled;
 	}
 	else
 	{
 		return false;
 	}
-}
-
-bool IsInAVehicle(int client)
-{
-	return GetEntPropEnt(client, Prop_Send, "m_hVehicle") != -1;
-}
-
-int GetWaterLevel(int entity)
-{
-	return GetEntProp(entity, Prop_Data, "m_nWaterLevel");
 }

@@ -17,7 +17,8 @@ It is similar to the bunnyhop found in newer Source engine games, such as Counte
 
 ## Dependencies
 
-* SourceMod 1.10+
+* SourceMod 1.11+
+* [TF2Attributes](https://github.com/FlaminSarge/tf2attributes)
 * [MemoryPatch](https://github.com/Kenzzer/MemoryPatch) (compile only)
 
 ## Configuration
