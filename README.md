@@ -19,7 +19,7 @@ It is similar to the bunnyhop found in newer Source engine games, such as Counte
 
 * SourceMod 1.11+
 * [TF2Attributes](https://github.com/FlaminSarge/tf2attributes)
-* [MemoryPatch](https://github.com/Kenzzer/MemoryPatch) (compile only)
+* [Source Scramble](https://github.com/nosoop/SMExt-SourceScramble)
 
 ## Configuration
 

@@ -21,7 +21,7 @@
 #include <clientprefs>
 #include <tf2_stocks>
 #include <tf2attributes>
-#include <memorypatch>
+#include <sourcescramble>
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -55,7 +55,7 @@ public Plugin myinfo =
 	name = "[TF2] Simple Bunnyhop",
 	author = "Mikusch",
 	description = "Simple TF2 bunnyhopping plugin",
-	version = "1.6.0",
+	version = "1.7.0",
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
@@ -73,20 +73,11 @@ public void OnPluginStart()
 	sv_duckbunnyhopping = CreateConVar("sv_duckbunnyhopping", "1", "Allow jumping while ducked");
 	sv_duckbunnyhopping.AddChangeHook(ConVarChanged_DuckBunnyhopping);
 	
+	AutoExecConfig();
+	
 	g_CookieAutoBunnyhoppingDisabled = new Cookie("autobunnyhopping_disabled", "Do not automatically re-jump while holding jump button", CookieAccess_Protected);
 	
 	RegConsoleCmd("sm_bhop", ConCmd_ToggleAutoBunnyhopping, "Toggle auto-bunnyhopping preference");
-	
-	AutoExecConfig();
-	
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (IsClientInGame(client))
-			OnClientPutInServer(client);
-		
-		if (AreClientCookiesCached(client))
-			OnClientCookiesCached(client);
-	}
 	
 	GameData gamedata = new GameData("tf-bhop");
 	if (!gamedata)
@@ -105,9 +96,17 @@ public void OnPluginStart()
 		LogError("Failed to find signature for function CTFPlayer::CanAirDash");
 	}
 	
-	MemoryPatch.SetGameData(gamedata);
-	CreateMemoryPatch(g_MemoryPatchAllowDuckJumping, "MemoryPatch_AllowDuckJumping");
-	CreateMemoryPatch(g_MemoryPatchAllowBunnyJumping, "MemoryPatch_AllowBunnyJumping");
+	g_MemoryPatchAllowDuckJumping = CreateMemoryPatch(gamedata, "CTFGameMovement::CheckJumpButton::AllowDuckJumping");
+	g_MemoryPatchAllowBunnyJumping = CreateMemoryPatch(gamedata, "CTFGameMovement::PreventBunnyJumping::AllowBunnyJumping");
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client))
+			OnClientPutInServer(client);
+		
+		if (AreClientCookiesCached(client))
+			OnClientCookiesCached(client);
+	}
 	
 	delete gamedata;
 }
@@ -178,12 +177,11 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 
 public void OnClientCookiesCached(int client)
 {
-	char value[8];
+	char value[11];
 	g_CookieAutoBunnyhoppingDisabled.Get(client, value, sizeof(value));
 	
-	bool result;
-	if (value[0] != EOS && StringToIntEx(value, result) != 0)
-		g_IsAutobunnyHoppingDisabled[client] = result;
+	if (value[0] != EOS)
+		g_IsAutobunnyHoppingDisabled[client] = StringToInt(value) != 0;
 }
 
 void ConVarChanged_DuckBunnyhopping(ConVar convar, const char[] oldValue, const char[] newValue)
@@ -212,8 +210,8 @@ Action ConCmd_ToggleAutoBunnyhopping(int client, int args)
 {
 	bool value = g_IsAutobunnyHoppingDisabled[client] = !g_IsAutobunnyHoppingDisabled[client];
 	
-	char strValue[8];
-	if (IntToString(value, strValue, sizeof(strValue)) > 0)
+	char strValue[11];
+	if (IntToString(value, strValue, sizeof(strValue)) != 0)
 		g_CookieAutoBunnyhoppingDisabled.Set(client, strValue);
 	
 	ReplyToCommand(client, "%t", value ? "Auto-bunnyhopping disabled" : "Auto-bunnyhopping enabled");
@@ -253,13 +251,18 @@ bool HitTrigger(int entity)
 	return true;
 }
 
-void CreateMemoryPatch(MemoryPatch &handle, const char[] name)
+MemoryPatch CreateMemoryPatch(GameData gamedata, const char[] name)
 {
-	handle = new MemoryPatch(name);
-	if (handle)
-		handle.Enable();
+	MemoryPatch patch = MemoryPatch.CreateFromConf(gamedata, name);
+	if (patch && patch.Enable())
+	{
+		return patch;
+	}
 	else
+	{
 		LogError("Failed to create memory patch %s", name);
+		return null;
+	}
 }
 
 bool CanBunnyhop(int client)
