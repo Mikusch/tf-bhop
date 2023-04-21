@@ -254,15 +254,19 @@ bool HitTrigger(int entity)
 MemoryPatch CreateMemoryPatch(GameData gamedata, const char[] name)
 {
 	MemoryPatch patch = MemoryPatch.CreateFromConf(gamedata, name);
-	if (patch && patch.Enable())
+	if (patch)
 	{
-		return patch;
+		if (patch.Enable())
+			return patch;
+		else
+			LogError("Failed to verify memory patch %s", name);
 	}
 	else
 	{
 		LogError("Failed to create memory patch %s", name);
-		return null;
 	}
+	
+	return null;
 }
 
 bool CanBunnyhop(int client)
