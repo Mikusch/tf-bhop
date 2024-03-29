@@ -26,6 +26,8 @@
 #pragma semicolon 1
 #pragma newdecls required
 
+#define PLUGIN_VERSION	"1.7.1"
+
 enum
 {
 	WL_NotInWater = 0,
@@ -55,7 +57,7 @@ public Plugin myinfo =
 	name = "[TF2] Simple Bunnyhop",
 	author = "Mikusch",
 	description = "Simple TF2 bunnyhopping plugin",
-	version = "1.7.0",
+	version = PLUGIN_VERSION,
 	url = "https://github.com/Mikusch/tf-bhop"
 }
 
