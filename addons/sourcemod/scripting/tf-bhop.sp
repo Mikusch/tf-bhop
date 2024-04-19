@@ -143,14 +143,6 @@ public void OnClientPutInServer(int client)
 		OnClientCookiesCached(client);
 }
 
-public void OnClientDisconnect(int client)
-{
-	if (!g_bIsEnabled)
-		return;
-	
-	SDKUnhook(client, SDKHook_OnTakeDamage, OnClientTakeDamage);
-}
-
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
 	if (!g_bIsEnabled)
@@ -304,7 +296,7 @@ void TogglePlugin(bool bEnable)
 		if (bEnable)
 			OnClientPutInServer(client);
 		else
-			OnClientDisconnect(client);
+			SDKUnhook(client, SDKHook_OnTakeDamage, OnClientTakeDamage);
 	}
 }
 
