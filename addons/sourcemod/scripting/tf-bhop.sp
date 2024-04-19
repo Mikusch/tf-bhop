@@ -99,7 +99,17 @@ public void OnPluginStart()
 	}
 	
 	g_MemoryPatchAllowDuckJumping = CreateMemoryPatch(gamedata, "CTFGameMovement::CheckJumpButton::AllowDuckJumping");
-	g_MemoryPatchAllowBunnyJumping = CreateMemoryPatch(gamedata, "CTFGameMovement::PreventBunnyJumping::AllowBunnyJumping");
+	
+	char platform[64];
+	if (gamedata.GetKeyValue("Platform", platform, sizeof(platform)))
+	{
+		if (StrEqual(platform, "linux"))
+			g_MemoryPatchAllowBunnyJumping = CreateMemoryPatch(gamedata, "CTFGameMovement::PreventBunnyJumping::AllowBunnyJumpingLinux");
+		else if (StrEqual(platform, "windows"))
+			g_MemoryPatchAllowBunnyJumping = CreateMemoryPatch(gamedata, "CTFGameMovement::PreventBunnyJumping::AllowBunnyJumpingWindows");
+		else
+			ThrowError("Unknown or unsupported platform '%s'", platform);
+	}
 	
 	for (int client = 1; client <= MaxClients; client++)
 	{
@@ -115,11 +125,8 @@ public void OnPluginStart()
 
 public void OnPluginEnd()
 {
-	if (g_MemoryPatchAllowDuckJumping)
-		g_MemoryPatchAllowDuckJumping.Disable();
-	
-	if (g_MemoryPatchAllowBunnyJumping)
-		g_MemoryPatchAllowBunnyJumping.Disable();
+	g_MemoryPatchAllowDuckJumping.Disable();
+	g_MemoryPatchAllowBunnyJumping.Disable();
 }
 
 public void OnClientPutInServer(int client)
@@ -188,24 +195,18 @@ public void OnClientCookiesCached(int client)
 
 void ConVarChanged_DuckBunnyhopping(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	if (g_MemoryPatchAllowDuckJumping)
-	{
-		if (convar.BoolValue)
-			g_MemoryPatchAllowDuckJumping.Enable();
-		else
-			g_MemoryPatchAllowDuckJumping.Disable();
-	}
+	if (convar.BoolValue)
+		g_MemoryPatchAllowDuckJumping.Enable();
+	else
+		g_MemoryPatchAllowDuckJumping.Disable();
 }
 
 void ConVarChanged_PreventBunnyJumping(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	if (g_MemoryPatchAllowBunnyJumping)
-	{
-		if (convar.BoolValue)
-			g_MemoryPatchAllowBunnyJumping.Enable();
-		else
-			g_MemoryPatchAllowBunnyJumping.Disable();
-	}
+	if (convar.BoolValue)
+		g_MemoryPatchAllowBunnyJumping.Enable();
+	else
+		g_MemoryPatchAllowBunnyJumping.Disable();
 }
 
 Action ConCmd_ToggleAutoBunnyhopping(int client, int args)
