@@ -97,11 +97,11 @@ public void OnPluginStart()
 		PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_ByValue);
 		g_hSDKCallCanAirDash = EndPrepSDKCall();
 		if (!g_hSDKCallCanAirDash)
-			LogError("Failed to create SDKCall handle for function 'CTFPlayer::CanAirDash'");
+			SetFailState("Failed to create SDKCall handle for function 'CTFPlayer::CanAirDash'");
 	}
 	else
 	{
-		LogError("Failed to find signature for function 'CTFPlayer::CanAirDash'");
+		SetFailState("Failed to find signature for function 'CTFPlayer::CanAirDash'");
 	}
 	
 	char platform[64];
@@ -112,7 +112,7 @@ public void OnPluginStart()
 		else if (StrEqual(platform, "windows"))
 			CreateMemoryPatch(gameconf, "CTFGameMovement::PreventBunnyJumping::AllowBunnyJumping_Windows", sm_bhop_enabled);
 		else
-			ThrowError("Unknown or unsupported platform '%s'", platform);
+			SetFailState("Unknown or unsupported platform '%s'", platform);
 	}
 	
 	CreateMemoryPatch(gameconf, "CTFGameMovement::CheckJumpButton::AllowDuckJumping", sm_bhop_duckjump);
