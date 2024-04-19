@@ -117,15 +117,6 @@ public void OnPluginStart()
 	
 	CreateMemoryPatch(gameconf, "CTFGameMovement::CheckJumpButton::AllowDuckJumping", sm_bhop_duckjump);
 	
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (IsClientInGame(client))
-			OnClientPutInServer(client);
-		
-		if (AreClientCookiesCached(client))
-			OnClientCookiesCached(client);
-	}
-	
 	delete gameconf;
 }
 
@@ -147,6 +138,9 @@ public void OnClientPutInServer(int client)
 	g_bDisabledAutoBhop[client] = false;
 	
 	SDKHook(client, SDKHook_OnTakeDamage, OnClientTakeDamage);
+	
+	if (AreClientCookiesCached(client))
+		OnClientCookiesCached(client);
 }
 
 public void OnClientDisconnect(int client)
