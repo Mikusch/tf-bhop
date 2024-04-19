@@ -19,25 +19,37 @@
 {
 	"tf"
 	{
+		"Keys"
+		{
+			"Platform"
+			{
+				"linux"		"linux"
+				"linux64"	"linux"
+				"windows"	"windows"
+				"windows64"	"windows"
+			}
+		}
 		"Signatures"
 		{
+			// "set_scout_doublejump_disabled"
 			"CTFPlayer::CanAirDash"
 			{
 				"library"	"server"
 				"linux"		"@_ZNK9CTFPlayer10CanAirDashEv"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x57\x8B\xF9\xF7\x87\xB4\x1B\x00\x00\x00\x00\x04\x00"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x53\x57\x8B\xF9\x8B\x87\xB4\x1B\x00\x00"
 			}
+			// "BumperCar.Jump"
 			"CTFGameMovement::CheckJumpButton"
 			{
 				"library"	"server"
 				"linux"		"@_ZN15CTFGameMovement15CheckJumpButtonEv"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x0C\x57\x8B\xF9\x8B\x47\x04\x80\xB8\x84\x0B\x00\x00\x00"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x0C\x53\x56\x57\x8B\xF9\x8B\x4F\x04"
 			}
 			"CTFGameMovement::PreventBunnyJumping"
 			{
 				"library"	"server"
 				"linux"		"@_ZN15CTFGameMovement19PreventBunnyJumpingEv"
-				"windows"	"\x56\x8B\xF1\x6A\x52\x8B\x8E\xB8\x16\x00\x00\x81\xC1\xE0\x1A\x00\x00\xE8\x2A\x2A\x2A\x2A\x84\xC0\x75\x2A"
+				// Windows inlines this function
 			}
 		}
 		"MemPatches"
@@ -47,31 +59,35 @@
 				"signature"	"CTFGameMovement::CheckJumpButton"
 				"linux"
 				{
-					"offset"	"DFh"
-					"verify"	"\x74"
-					"patch"		"\xEB"
+					"offset"	"D3h"
+					"verify"	"\x74" // jz
+					"patch"		"\xEB" // jmp
 				}
 				"windows"
 				{
-					"offset"	"1FFh"
-					"verify"	"\x74"
-					"patch"		"\xEB"
+					"offset"	"38Eh"
+					"verify"	"\x74" // jz
+					"patch"		"\xEB" // jmp
 				}
 			}
-			"CTFGameMovement::PreventBunnyJumping::AllowBunnyJumping"
+			"CTFGameMovement::PreventBunnyJumping::AllowBunnyJumping_Linux"
 			{
 				"signature"	"CTFGameMovement::PreventBunnyJumping"
 				"linux"
 				{
-					"offset"	"27h"
-					"verify"	"\x75"
-					"patch"		"\xEB"
+					"offset"	"22h"
+					"verify"	"\x75" // jnz
+					"patch"		"\xEB" // jmp
 				}
+			}
+			"CTFGameMovement::PreventBunnyJumping::AllowBunnyJumping_Windows"
+			{
+				"signature"	"CTFGameMovement::CheckJumpButton"
 				"windows"
 				{
-					"offset"	"18h"
-					"verify"	"\x75"
-					"patch"		"\xEB"
+					"offset"	"42Bh"
+					"verify"	"\x75" // jnz
+					"patch"		"\xEB" // jmp
 				}
 			}
 		}
