@@ -23,7 +23,7 @@ It is similar to the bunnyhop found in newer Source engine games, such as Counte
 
 ## Configuration
 
-The plugin creates the following console variables, configurable in `cfg/sourcemod/plugin.tf-bhop.cfg`:
+The plugin creates the following console variables:
 
 * `sm_bhop_enabled ( def. "1" )` - When set, allows player speed to exceed maximum running speed.
 * `sm_bhop_autojump ( def. "1" )` - When set, players automatically re-jump while holding the jump button.
