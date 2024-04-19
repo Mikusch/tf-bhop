@@ -266,7 +266,7 @@ MemoryPatch CreateMemoryPatch(GameData gamedata, const char[] name)
 	}
 	else
 	{
-		LogError("Failed to create memory patch %s", name);
+		ThrowError("Failed to create memory patch %s", name);
 	}
 	
 	return null;
