@@ -24,7 +24,9 @@
 			"Platform"
 			{
 				"linux"		"linux"
+				"linux64"	"linux"
 				"windows"	"windows"
+				"windows64"	"windows"
 			}
 		}
 		"Signatures"
@@ -58,34 +60,34 @@
 				"linux"
 				{
 					"offset"	"D3h"
-					"verify"	"\x74"
-					"patch"		"\xEB"
+					"verify"	"\x74" // jz
+					"patch"		"\xEB" // jmp
 				}
 				"windows"
 				{
 					"offset"	"38Eh"
-					"verify"	"\x74"
-					"patch"		"\xEB"
+					"verify"	"\x74" // jz
+					"patch"		"\xEB" // jmp
 				}
 			}
-			"CTFGameMovement::PreventBunnyJumping::AllowBunnyJumpingLinux"
+			"CTFGameMovement::PreventBunnyJumping::AllowBunnyJumping_Linux"
 			{
 				"signature"	"CTFGameMovement::PreventBunnyJumping"
 				"linux"
 				{
 					"offset"	"22h"
-					"verify"	"\x75"
-					"patch"		"\xEB"
+					"verify"	"\x75" // jnz
+					"patch"		"\xEB" // jmp
 				}
 			}
-			"CTFGameMovement::PreventBunnyJumping::AllowBunnyJumpingWindows"
+			"CTFGameMovement::PreventBunnyJumping::AllowBunnyJumping_Windows"
 			{
 				"signature"	"CTFGameMovement::CheckJumpButton"
 				"windows"
 				{
 					"offset"	"42Bh"
-					"verify"	"\x75"
-					"patch"		"\xEB"
+					"verify"	"\x75" // jnz
+					"patch"		"\xEB" // jmp
 				}
 			}
 		}

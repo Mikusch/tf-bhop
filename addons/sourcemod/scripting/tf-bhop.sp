@@ -26,7 +26,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION	"1.7.2"
+#define PLUGIN_VERSION	"1.8.0"
 
 enum
 {
@@ -36,21 +36,27 @@ enum
 	WL_Eyes
 }
 
-ConVar sv_enablebunnyhopping;
-ConVar sv_autobunnyhopping;
-ConVar sv_autobunnyhopping_falldamage;
-ConVar sv_duckbunnyhopping;
+enum struct MemoryPatchData
+{
+	MemoryPatch patch;
+	ConVar convar;
+}
 
-Cookie g_CookieAutoBunnyhoppingDisabled;
+bool g_bIsEnabled;
 
-Handle g_SDKCallCanAirDash;
-MemoryPatch g_MemoryPatchAllowDuckJumping;
-MemoryPatch g_MemoryPatchAllowBunnyJumping;
+ArrayList g_hMemoryPatches;
+Cookie g_hCookieAutoJumpDisabled;
+Handle g_hSDKCallCanAirDash;
 
-bool g_IsBunnyHopping[MAXPLAYERS + 1];
-bool g_InJumpRelease[MAXPLAYERS + 1];
-bool g_IsAutobunnyHoppingDisabled[MAXPLAYERS + 1];
-bool g_InTriggerPush;
+ConVar sm_bhop_enabled;
+ConVar sm_bhop_autojump;
+ConVar sm_bhop_autojump_falldamage;
+ConVar sm_bhop_duckjump;
+
+bool g_bIsBunnyHopping[MAXPLAYERS + 1];
+bool g_bInJumpRelease[MAXPLAYERS + 1];
+bool g_bDisabledAutoBhop[MAXPLAYERS + 1];
+bool g_bInTriggerPush;
 
 public Plugin myinfo =
 {
@@ -68,48 +74,48 @@ public void OnPluginStart()
 	
 	LoadTranslations("tf-bhop.phrases");
 	
-	sv_enablebunnyhopping = CreateConVar("sv_enablebunnyhopping", "1", "Allow player speed to exceed maximum running speed");
-	sv_enablebunnyhopping.AddChangeHook(ConVarChanged_PreventBunnyJumping);
-	sv_autobunnyhopping = CreateConVar("sv_autobunnyhopping", "1", "Players automatically re-jump while holding jump button");
-	sv_autobunnyhopping_falldamage = CreateConVar("sv_autobunnyhopping_falldamage", "0", "Players can take fall damage while auto-bunnyhopping");
-	sv_duckbunnyhopping = CreateConVar("sv_duckbunnyhopping", "1", "Allow jumping while ducked");
-	sv_duckbunnyhopping.AddChangeHook(ConVarChanged_DuckBunnyhopping);
+	g_hMemoryPatches = new ArrayList(sizeof(MemoryPatchData));
 	
-	AutoExecConfig();
+	sm_bhop_enabled = CreateConVar("sm_bhop_enabled", "1", "When set, allows player speed to exceed maximum running speed.");
+	sm_bhop_enabled.AddChangeHook(OnConVarChanged_EnablePlugin);
+	sm_bhop_autojump = CreateConVar("sm_bhop_autojump", "1", "When set, players automatically re-jump while holding the jump button.");
+	sm_bhop_autojump_falldamage = CreateConVar("sm_bhop_autojump_falldamage", "0", "When set, players will take fall damage while auto-bunnyhopping.");
+	sm_bhop_duckjump = CreateConVar("sm_bhop_duckjump", "1", "When set, allows jumping while ducked.");
+	sm_bhop_duckjump.AddChangeHook(OnConVarChanged_EnableMemoryPatch);
 	
-	g_CookieAutoBunnyhoppingDisabled = new Cookie("autobunnyhopping_disabled", "Do not automatically re-jump while holding jump button", CookieAccess_Protected);
+	g_hCookieAutoJumpDisabled = new Cookie("autobunnyhopping_disabled", "Do not automatically re-jump while holding jump button", CookieAccess_Protected);
 	
 	RegConsoleCmd("sm_bhop", ConCmd_ToggleAutoBunnyhopping, "Toggle auto-bunnyhopping preference");
 	
-	GameData gamedata = new GameData("tf-bhop");
-	if (!gamedata)
+	GameData gameconf = new GameData("tf-bhop");
+	if (!gameconf)
 		SetFailState("Failed to load tf-bhop gamedata");
 	
 	StartPrepSDKCall(SDKCall_Player);
-	if (PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::CanAirDash"))
+	if (PrepSDKCall_SetFromConf(gameconf, SDKConf_Signature, "CTFPlayer::CanAirDash"))
 	{
 		PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_ByValue);
-		g_SDKCallCanAirDash = EndPrepSDKCall();
-		if (!g_SDKCallCanAirDash)
-			LogError("Failed to create SDKCall handle for function CTFPlayer::CanAirDash");
+		g_hSDKCallCanAirDash = EndPrepSDKCall();
+		if (!g_hSDKCallCanAirDash)
+			LogError("Failed to create SDKCall handle for function 'CTFPlayer::CanAirDash'");
 	}
 	else
 	{
-		LogError("Failed to find signature for function CTFPlayer::CanAirDash");
+		LogError("Failed to find signature for function 'CTFPlayer::CanAirDash'");
 	}
 	
-	g_MemoryPatchAllowDuckJumping = CreateMemoryPatch(gamedata, "CTFGameMovement::CheckJumpButton::AllowDuckJumping");
-	
 	char platform[64];
-	if (gamedata.GetKeyValue("Platform", platform, sizeof(platform)))
+	if (gameconf.GetKeyValue("Platform", platform, sizeof(platform)))
 	{
 		if (StrEqual(platform, "linux"))
-			g_MemoryPatchAllowBunnyJumping = CreateMemoryPatch(gamedata, "CTFGameMovement::PreventBunnyJumping::AllowBunnyJumpingLinux");
+			CreateMemoryPatch(gameconf, "CTFGameMovement::PreventBunnyJumping::AllowBunnyJumping_Linux", sm_bhop_enabled);
 		else if (StrEqual(platform, "windows"))
-			g_MemoryPatchAllowBunnyJumping = CreateMemoryPatch(gamedata, "CTFGameMovement::PreventBunnyJumping::AllowBunnyJumpingWindows");
+			CreateMemoryPatch(gameconf, "CTFGameMovement::PreventBunnyJumping::AllowBunnyJumping_Windows", sm_bhop_enabled);
 		else
 			ThrowError("Unknown or unsupported platform '%s'", platform);
 	}
+	
+	CreateMemoryPatch(gameconf, "CTFGameMovement::CheckJumpButton::AllowDuckJumping", sm_bhop_duckjump);
 	
 	for (int client = 1; client <= MaxClients; client++)
 	{
@@ -120,65 +126,78 @@ public void OnPluginStart()
 			OnClientCookiesCached(client);
 	}
 	
-	delete gamedata;
+	delete gameconf;
 }
 
-public void OnPluginEnd()
+public void OnConfigsExecuted()
 {
-	g_MemoryPatchAllowDuckJumping.Disable();
-	g_MemoryPatchAllowBunnyJumping.Disable();
+	if (g_bIsEnabled != sm_bhop_enabled.BoolValue)
+	{
+		TogglePlugin(sm_bhop_enabled.BoolValue);
+	}
 }
 
 public void OnClientPutInServer(int client)
 {
+	if (!g_bIsEnabled)
+		return;
+	
+	g_bIsBunnyHopping[client] = false;
+	g_bInJumpRelease[client] = false;
+	g_bDisabledAutoBhop[client] = false;
+	
 	SDKHook(client, SDKHook_OnTakeDamage, OnClientTakeDamage);
 }
 
 public void OnClientDisconnect(int client)
 {
-	g_IsBunnyHopping[client] = false;
-	g_InJumpRelease[client] = false;
-	g_IsAutobunnyHoppingDisabled[client] = false;
+	if (!g_bIsEnabled)
+		return;
+	
+	SDKUnhook(client, SDKHook_OnTakeDamage, OnClientTakeDamage);
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
-	if (sv_autobunnyhopping.BoolValue)
+	if (!g_bIsEnabled)
+		return Plugin_Continue;
+	
+	if (!sm_bhop_autojump.BoolValue)
+		return Plugin_Continue;
+	
+	g_bIsBunnyHopping[client] = false;
+	
+	if (!(GetEntityFlags(client) & FL_ONGROUND))
 	{
-		g_IsBunnyHopping[client] = false;
-		
-		if (!(GetEntityFlags(client) & FL_ONGROUND))
+		if (buttons & IN_JUMP)
 		{
-			if (buttons & IN_JUMP)
+			if (g_bInJumpRelease[client] && (CanAirDash(client) || CanDeployParachute(client)))
 			{
-				if (g_InJumpRelease[client] && (CanAirDash(client) || CanDeployParachute(client)))
+				g_bInJumpRelease[client] = false;
+			}
+			else if (CanBunnyhop(client))
+			{
+				g_bInTriggerPush = false;
+				
+				float origin[3];
+				GetClientAbsOrigin(client, origin);
+				TR_EnumerateEntities(origin, origin, PARTITION_TRIGGER_EDICTS, RayType_EndPoint, HitTrigger);
+				
+				if (!g_bInTriggerPush)
 				{
-					g_InJumpRelease[client] = false;
-				}
-				else if (CanBunnyhop(client))
-				{
-					g_InTriggerPush = false;
-					
-					float origin[3];
-					GetClientAbsOrigin(client, origin);
-					TR_EnumerateEntities(origin, origin, PARTITION_TRIGGER_EDICTS, RayType_EndPoint, HitTrigger);
-					
-					if (!g_InTriggerPush)
-					{
-						g_IsBunnyHopping[client] = true;
-						buttons &= ~IN_JUMP;
-					}
+					g_bIsBunnyHopping[client] = true;
+					buttons &= ~IN_JUMP;
 				}
 			}
-			else if (CanAirDash(client) || CanDeployParachute(client))
-			{
-				g_InJumpRelease[client] = true;
-			}
 		}
-		else
+		else if (CanAirDash(client) || CanDeployParachute(client))
 		{
-			g_InJumpRelease[client] = false;
+			g_bInJumpRelease[client] = true;
 		}
+	}
+	else
+	{
+		g_bInJumpRelease[client] = false;
 	}
 	
 	return Plugin_Continue;
@@ -186,45 +205,58 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 
 public void OnClientCookiesCached(int client)
 {
-	char value[11];
-	g_CookieAutoBunnyhoppingDisabled.Get(client, value, sizeof(value));
+	if (!g_bIsEnabled)
+		return;
 	
-	if (value[0] != EOS)
-		g_IsAutobunnyHoppingDisabled[client] = StringToInt(value) != 0;
+	char value[11];
+	g_hCookieAutoJumpDisabled.Get(client, value, sizeof(value));
+	
+	StringToIntEx(value, g_bDisabledAutoBhop[client]);
 }
 
-void ConVarChanged_DuckBunnyhopping(ConVar convar, const char[] oldValue, const char[] newValue)
+void OnConVarChanged_EnablePlugin(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	if (convar.BoolValue)
-		g_MemoryPatchAllowDuckJumping.Enable();
-	else
-		g_MemoryPatchAllowDuckJumping.Disable();
+	if (g_bIsEnabled == convar.BoolValue)
+		return;
+	
+	TogglePlugin(convar.BoolValue);
 }
 
-void ConVarChanged_PreventBunnyJumping(ConVar convar, const char[] oldValue, const char[] newValue)
+void OnConVarChanged_EnableMemoryPatch(ConVar convar, const char[] oldValue, const char[] newValue)
 {
+	if (!g_bIsEnabled)
+		return;
+	
+	int index = g_hMemoryPatches.FindValue(convar, MemoryPatchData::convar);
+	if (index == -1)
+		return;
+	
+	MemoryPatchData data;
+	if (!g_hMemoryPatches.GetArray(index, data))
+		return;
+	
 	if (convar.BoolValue)
-		g_MemoryPatchAllowBunnyJumping.Enable();
+		data.patch.Enable();
 	else
-		g_MemoryPatchAllowBunnyJumping.Disable();
+		data.patch.Disable();
 }
 
 Action ConCmd_ToggleAutoBunnyhopping(int client, int args)
 {
-	bool value = g_IsAutobunnyHoppingDisabled[client] = !g_IsAutobunnyHoppingDisabled[client];
+	bool bValue = g_bDisabledAutoBhop[client] = !g_bDisabledAutoBhop[client];
 	
-	char strValue[11];
-	if (IntToString(value, strValue, sizeof(strValue)) != 0)
-		g_CookieAutoBunnyhoppingDisabled.Set(client, strValue);
+	char value[11];
+	if (IntToString(bValue, value, sizeof(value)))
+		g_hCookieAutoJumpDisabled.Set(client, value);
 	
-	ReplyToCommand(client, "%t", value ? "Auto-bunnyhopping disabled" : "Auto-bunnyhopping enabled");
+	ReplyToCommand(client, "%t", bValue ? "Auto-bunnyhopping disabled" : "Auto-bunnyhopping enabled");
 	
 	return Plugin_Handled;
 }
 
 Action OnClientTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
 {
-	if (sv_autobunnyhopping.BoolValue && !sv_autobunnyhopping_falldamage.BoolValue && g_IsBunnyHopping[victim] && (attacker == 0) && (damagetype & DMG_FALL))
+	if (sm_bhop_autojump.BoolValue && !sm_bhop_autojump_falldamage.BoolValue && g_bIsBunnyHopping[victim] && (attacker == 0) && (damagetype & DMG_FALL))
 	{
 		damage = 0.0;
 		return Plugin_Changed;
@@ -246,7 +278,7 @@ bool HitTrigger(int entity)
 			bool didHit = TR_DidHit(trace);
 			delete trace;
 			
-			g_InTriggerPush = didHit;
+			g_bInTriggerPush = didHit;
 			return !didHit;
 		}
 	}
@@ -254,28 +286,54 @@ bool HitTrigger(int entity)
 	return true;
 }
 
-MemoryPatch CreateMemoryPatch(GameData gamedata, const char[] name)
+void TogglePlugin(bool bEnable)
 {
-	MemoryPatch patch = MemoryPatch.CreateFromConf(gamedata, name);
-	if (patch)
+	g_bIsEnabled = bEnable;
+	
+	for (int i = 0; i < g_hMemoryPatches.Length; i++)
 	{
-		if (patch.Enable())
-			return patch;
-		else
-			LogError("Failed to verify memory patch %s", name);
-	}
-	else
-	{
-		ThrowError("Failed to create memory patch %s", name);
+		MemoryPatchData data;
+		if (g_hMemoryPatches.GetArray(i, data))
+		{
+			if (bEnable && data.convar.BoolValue)
+				data.patch.Enable();
+			else
+				data.patch.Disable();
+		}
 	}
 	
-	return null;
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		if (bEnable)
+			OnClientPutInServer(client);
+		else
+			OnClientDisconnect(client);
+	}
+}
+
+void CreateMemoryPatch(GameData gameconf, const char[] name, ConVar convar)
+{
+	MemoryPatch patch = MemoryPatch.CreateFromConf(gameconf, name);
+	if (!patch)
+		SetFailState("Failed to create memory patch '%s'", name);
+	
+	if (!patch.Validate())
+		SetFailState("Failed to validate memory patch '%s'", name);
+	
+	MemoryPatchData data;
+	data.patch = patch;
+	data.convar = convar;
+	
+	g_hMemoryPatches.PushArray(data);
 }
 
 bool CanBunnyhop(int client)
 {
-	return !g_IsAutobunnyHoppingDisabled[client]
-		&& !g_InJumpRelease[client]
+	return !g_bDisabledAutoBhop[client]
+		&& !g_bInJumpRelease[client]
 		&& GetEntPropEnt(client, Prop_Send, "m_hVehicle") == -1
 		&& GetEntProp(client, Prop_Data, "m_nWaterLevel") < WL_Waist
 		&& GetEntityMoveType(client) != MOVETYPE_NONE
@@ -285,24 +343,10 @@ bool CanBunnyhop(int client)
 
 bool CanAirDash(int client)
 {
-	if (g_SDKCallCanAirDash)
-		return SDKCall(g_SDKCallCanAirDash, client);
-	else
-		return false;
+	return g_hSDKCallCanAirDash ? SDKCall(g_hSDKCallCanAirDash, client) : false;
 }
 
 bool CanDeployParachute(int client)
 {
-	int parachute = 0;
-	parachute = TF2Attrib_HookValueInt(parachute, "parachute_attribute", client);
-	if (parachute)
-	{
-		int parachute_disabled = 0;
-		parachute_disabled = TF2Attrib_HookValueInt(parachute_disabled, "parachute_disabled", client);
-		return !parachute_disabled;
-	}
-	else
-	{
-		return false;
-	}
+	return TF2Attrib_HookValueInt(0, "parachute_attribute", client) ? !TF2Attrib_HookValueInt(0, "parachute_disabled", client) : false;
 }
