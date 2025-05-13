@@ -26,7 +26,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION	"1.8.0"
+#define PLUGIN_VERSION	"1.8.1"
 
 enum
 {
