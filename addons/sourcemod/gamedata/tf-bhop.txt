@@ -59,13 +59,13 @@
 				"signature"	"CTFGameMovement::CheckJumpButton"
 				"linux"
 				{
-					"offset"	"D3h"
+					"offset"	"D5h"
 					"verify"	"\x74" // jz
 					"patch"		"\xEB" // jmp
 				}
 				"windows"
 				{
-					"offset"	"38Eh"
+					"offset"	"385h"
 					"verify"	"\x74" // jz
 					"patch"		"\xEB" // jmp
 				}
@@ -85,7 +85,7 @@
 				"signature"	"CTFGameMovement::CheckJumpButton"
 				"windows"
 				{
-					"offset"	"42Bh"
+					"offset"	"41Fh"
 					"verify"	"\x75" // jnz
 					"patch"		"\xEB" // jmp
 				}
