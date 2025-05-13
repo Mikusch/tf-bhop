@@ -36,7 +36,7 @@
 			{
 				"library"	"server"
 				"linux"		"@_ZNK9CTFPlayer10CanAirDashEv"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x53\x57\x8B\xF9\x8B\x87\xB4\x1B\x00\x00"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x53\x57\x8B\xF9\x8B\x87\xBC\x1B\x00\x00"
 			}
 			// "BumperCar.Jump"
 			"CTFGameMovement::CheckJumpButton"
