@@ -15,6 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#pragma semicolon 1
+#pragma newdecls required
+
 #include <sourcemod>
 #include <sdktools>
 #include <sdkhooks>
@@ -23,10 +26,7 @@
 #include <tf2attributes>
 #include <sourcescramble>
 
-#pragma semicolon 1
-#pragma newdecls required
-
-#define PLUGIN_VERSION	"1.8.2"
+#define PLUGIN_VERSION	"1.9.0"
 
 enum
 {
@@ -49,6 +49,7 @@ Cookie g_hCookieAutoJumpDisabled;
 Handle g_hSDKCallCanAirDash;
 
 ConVar sm_bhop_enabled;
+ConVar sm_bhop_enablebunnyhopping;
 ConVar sm_bhop_autojump;
 ConVar sm_bhop_autojump_falldamage;
 ConVar sm_bhop_duckjump;
@@ -76,14 +77,17 @@ public void OnPluginStart()
 	
 	g_hMemoryPatches = new ArrayList(sizeof(MemoryPatchData));
 	
-	sm_bhop_enabled = CreateConVar("sm_bhop_enabled", "1", "When set, allows player speed to exceed maximum running speed.");
+	CreateConVar("sm_bhop_version", PLUGIN_VERSION, "The plugin version.", FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_DONTRECORD);
+	sm_bhop_enabled = CreateConVar("sm_bhop_enabled", "1", "Whether to enable the plugin.");
 	sm_bhop_enabled.AddChangeHook(OnConVarChanged_EnablePlugin);
+	sm_bhop_enablebunnyhopping = CreateConVar("sm_bhop_enablebunnyhopping", "1", "When set, allows player speed to exceed maximum running speed.");
+	sm_bhop_enablebunnyhopping.AddChangeHook(OnConVarChanged_EnableMemoryPatch);
 	sm_bhop_autojump = CreateConVar("sm_bhop_autojump", "1", "When set, players automatically re-jump while holding the jump button.");
 	sm_bhop_autojump_falldamage = CreateConVar("sm_bhop_autojump_falldamage", "0", "When set, players will take fall damage while auto-bunnyhopping.");
 	sm_bhop_duckjump = CreateConVar("sm_bhop_duckjump", "1", "When set, allows jumping while ducked.");
 	sm_bhop_duckjump.AddChangeHook(OnConVarChanged_EnableMemoryPatch);
 	
-	g_hCookieAutoJumpDisabled = new Cookie("autobunnyhopping_disabled", "Do not automatically re-jump while holding jump button", CookieAccess_Protected);
+	g_hCookieAutoJumpDisabled = new Cookie("bhop_autojump_disable", "Do not automatically re-jump while holding jump button", CookieAccess_Protected);
 	
 	RegConsoleCmd("sm_bhop", ConCmd_ToggleAutoBunnyhopping, "Toggle auto-bunnyhopping preference");
 	
@@ -104,13 +108,13 @@ public void OnPluginStart()
 		SetFailState("Failed to find signature for function 'CTFPlayer::CanAirDash'");
 	}
 	
-	char platform[64];
+	char platform[16];
 	if (gameconf.GetKeyValue("Platform", platform, sizeof(platform)))
 	{
 		if (StrEqual(platform, "linux"))
-			CreateMemoryPatch(gameconf, "CTFGameMovement::PreventBunnyJumping::AllowBunnyJumping_Linux", sm_bhop_enabled);
+			CreateMemoryPatch(gameconf, "CTFGameMovement::PreventBunnyJumping::AllowBunnyJumping_Linux", sm_bhop_enablebunnyhopping);
 		else if (StrEqual(platform, "windows"))
-			CreateMemoryPatch(gameconf, "CTFGameMovement::PreventBunnyJumping::AllowBunnyJumping_Windows", sm_bhop_enabled);
+			CreateMemoryPatch(gameconf, "CTFGameMovement::PreventBunnyJumping::AllowBunnyJumping_Windows", sm_bhop_enablebunnyhopping);
 		else
 			SetFailState("Unknown or unsupported platform '%s'", platform);
 	}
@@ -253,7 +257,7 @@ Action OnClientTakeDamage(int victim, int &attacker, int &inflictor, float &dama
 
 bool HitTrigger(int entity)
 {
-	char classname[16];
+	char classname[13];
 	if (GetEntityClassname(entity, classname, sizeof(classname)) && StrEqual(classname, "trigger_push"))
 	{
 		float pushDir[3];
@@ -320,7 +324,7 @@ bool CanBunnyhop(int client)
 {
 	return !g_bDisabledAutoBhop[client]
 		&& !g_bInJumpRelease[client]
-		&& GetEntPropEnt(client, Prop_Send, "m_hVehicle") == -1
+		&& GetEntPropEnt(client, Prop_Data, "m_hVehicle") == -1
 		&& GetEntProp(client, Prop_Data, "m_nWaterLevel") < WL_Waist
 		&& GetEntityMoveType(client) != MOVETYPE_NONE
 		&& !TF2_IsPlayerInCondition(client, TFCond_HalloweenGhostMode)
@@ -329,10 +333,10 @@ bool CanBunnyhop(int client)
 
 bool CanAirDash(int client)
 {
-	return g_hSDKCallCanAirDash ? SDKCall(g_hSDKCallCanAirDash, client) : false;
+	return SDKCall(g_hSDKCallCanAirDash, client);
 }
 
 bool CanDeployParachute(int client)
 {
-	return TF2Attrib_HookValueInt(0, "parachute_attribute", client) ? !TF2Attrib_HookValueInt(0, "parachute_disabled", client) : false;
+	return TF2Attrib_HookValueInt(0, "parachute_attribute", client) != 0;
 }

@@ -17,7 +17,7 @@ It is similar to the bunnyhop found in newer Source engine games, such as Counte
 
 ## Dependencies
 
-* SourceMod 1.11+
+* SourceMod 1.12+
 * [TF2Attributes](https://github.com/FlaminSarge/tf2attributes)
 * [Source Scramble](https://github.com/nosoop/SMExt-SourceScramble)
 
@@ -25,7 +25,8 @@ It is similar to the bunnyhop found in newer Source engine games, such as Counte
 
 The plugin creates the following console variables:
 
-* `sm_bhop_enabled ( def. "1" )` - When set, allows player speed to exceed maximum running speed.
+* `sm_bhop_enabled ( def. "1" )` - Whether to enable the plugin.
+* `sm_bhop_enablebunnyhopping ( def. "1" )` - When set, allows player speed to exceed maximum running speed.
 * `sm_bhop_autojump ( def. "1" )` - When set, players automatically re-jump while holding the jump button.
 * `sm_bhop_autojump_falldamage ( def. "0" )` - When set, players will take fall damage while auto-bunnyhopping.
 * `sm_bhop_duckjump ( def. "1" )` - When set, allows jumping while ducked.
