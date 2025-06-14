@@ -124,12 +124,14 @@ public void OnPluginStart()
 	delete gameconf;
 }
 
+public void OnPluginEnd()
+{
+	TogglePlugin(false);
+}
+
 public void OnConfigsExecuted()
 {
-	if (g_bIsEnabled != sm_bhop_enabled.BoolValue)
-	{
-		TogglePlugin(sm_bhop_enabled.BoolValue);
-	}
+	TogglePlugin(sm_bhop_enabled.BoolValue);
 }
 
 public void OnClientPutInServer(int client)
@@ -206,9 +208,6 @@ public void OnClientCookiesCached(int client)
 
 void OnConVarChanged_EnablePlugin(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	if (g_bIsEnabled == convar.BoolValue)
-		return;
-	
 	TogglePlugin(convar.BoolValue);
 }
 
@@ -278,6 +277,9 @@ bool HitTrigger(int entity)
 
 void TogglePlugin(bool bEnable)
 {
+	if (g_bIsEnabled == bEnable)
+		return;
+
 	g_bIsEnabled = bEnable;
 	
 	for (int i = 0; i < g_hMemoryPatches.Length; i++)
