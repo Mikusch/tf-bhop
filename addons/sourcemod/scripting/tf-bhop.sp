@@ -199,11 +199,8 @@ public void OnClientCookiesCached(int client)
 {
 	if (!g_bIsEnabled)
 		return;
-	
-	char value[11];
-	g_hCookieAutoJumpDisabled.Get(client, value, sizeof(value));
-	
-	StringToIntEx(value, g_bDisabledAutoBhop[client]);
+
+	g_bDisabledAutoBhop[client] = g_hCookieAutoJumpDisabled.GetInt(client) != 0;
 }
 
 void OnConVarChanged_EnablePlugin(ConVar convar, const char[] oldValue, const char[] newValue)
@@ -234,9 +231,7 @@ Action ConCmd_ToggleAutoBunnyhopping(int client, int args)
 {
 	bool bValue = g_bDisabledAutoBhop[client] = !g_bDisabledAutoBhop[client];
 	
-	char value[11];
-	if (IntToString(bValue, value, sizeof(value)))
-		g_hCookieAutoJumpDisabled.Set(client, value);
+	g_hCookieAutoJumpDisabled.SetInt(client, bValue);
 	
 	ReplyToCommand(client, "%t", bValue ? "Auto-bunnyhopping disabled" : "Auto-bunnyhopping enabled");
 	
