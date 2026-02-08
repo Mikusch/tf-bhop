@@ -19,19 +19,24 @@
 			{
 				"library"	"server"
 				"linux"		"@_ZNK9CTFPlayer10CanAirDashEv"
+				"linux64"	"@_ZNK9CTFPlayer10CanAirDashEv"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x53\x57\x8B\xF9\x8B\x87\xBC\x1B\x00\x00"
+				"windows64"	"\x48\x89\x6C\x24\x10\x48\x89\x74\x24\x18\x57\x48\x83\xEC\x30\x8B\x81\xDC\x1E\x00\x00"
 			}
 			// "BumperCar.Jump"
 			"CTFGameMovement::CheckJumpButton"
 			{
 				"library"	"server"
 				"linux"		"@_ZN15CTFGameMovement15CheckJumpButtonEv"
+				"linux64"	"@_ZN15CTFGameMovement15CheckJumpButtonEv"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x0C\x53\x56\x57\x8B\xF9\x8B\x4F\x04"
+				"windows64"	"\x48\x89\x5C\x24\x08\x48\x89\x6C\x24\x10\x48\x89\x74\x24\x18\x57\x48\x83\xEC\x50\x48\x8B\xF9\x0F\x29\x74\x24\x40"
 			}
 			"CTFGameMovement::PreventBunnyJumping"
 			{
 				"library"	"server"
 				"linux"		"@_ZN15CTFGameMovement19PreventBunnyJumpingEv"
+				"linux64"	"@_ZN15CTFGameMovement19PreventBunnyJumpingEv"
 				// Windows inlines this function
 			}
 		}
@@ -46,9 +51,21 @@
 					"verify"	"\x74" // jz
 					"patch"		"\xEB" // jmp
 				}
+				"linux64"
+				{
+					"offset"	"D5h"
+					"verify"	"\x74" // jz
+					"patch"		"\xEB" // jmp
+				}
 				"windows"
 				{
 					"offset"	"385h"
+					"verify"	"\x74" // jz
+					"patch"		"\xEB" // jmp
+				}
+				"windows64"
+				{
+					"offset"	"3A5h"
 					"verify"	"\x74" // jz
 					"patch"		"\xEB" // jmp
 				}
@@ -62,6 +79,12 @@
 					"verify"	"\x75" // jnz
 					"patch"		"\xEB" // jmp
 				}
+				"linux64"
+				{
+					"offset"	"26h"
+					"verify"	"\x75" // jnz
+					"patch"		"\xEB" // jmp
+				}
 			}
 			"CTFGameMovement::PreventBunnyJumping::AllowBunnyJumping_Windows"
 			{
@@ -69,6 +92,12 @@
 				"windows"
 				{
 					"offset"	"41Fh"
+					"verify"	"\x75" // jnz
+					"patch"		"\xEB" // jmp
+				}
+				"windows64"
+				{
+					"offset"	"456h"
 					"verify"	"\x75" // jnz
 					"patch"		"\xEB" // jmp
 				}
