@@ -2,6 +2,7 @@ name: Compile and release
 
 on:
   push:
+    branches: [ master ]
   pull_request:
   workflow_dispatch:
 
@@ -30,7 +31,7 @@ jobs:
       - name: Download include files
         if: steps.cache-includes.outputs.cache-hit != 'true'
         run: |
-          set -e
+          set -euo pipefail
           includes=(
             "https://raw.githubusercontent.com/FlaminSarge/tf2attributes/refs/heads/master/scripting/include/tf2attributes.inc"
             "https://raw.githubusercontent.com/nosoop/SMExt-SourceScramble/refs/heads/master/scripting/include/sourcescramble.inc"
@@ -53,25 +54,21 @@ jobs:
 
       - name: Compile plugin
         run: |
+          set -euo pipefail
           mkdir -p ../plugins
           spcomp -v2 -E -i "include" -o "../plugins/${{ env.PLUGIN_NAME }}.smx" "${{ env.PLUGIN_NAME }}.sp"
-          echo "=== OUT FILES ==="
-          ls ../plugins
-          echo "=== VERSION ==="
-          echo ${{ steps.setup_sp.outputs.plugin-version }}
         working-directory: ${{ env.SCRIPTS_PATH }}
 
-      - name: Zip output
-        run: zip -qq -r ${{ github.event.repository.name }}.zip addons/sourcemod
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PLUGIN_NAME }}-${{ env.SM_VERSION }}
+          path: addons/sourcemod/plugins/${{ env.PLUGIN_NAME }}.smx
+          if-no-files-found: error
 
-      - name: List build outputs
-        run: |
-          echo "::group::Directory contents"
-          ls -R
-          echo "::endgroup::"
-          echo "::group::Zip contents"
-          unzip -l ${{ github.event.repository.name }}.zip
-          echo "::endgroup::"
+      - name: Zip output
+        if: github.ref_name == 'master'
+        run: zip -qq -r ${{ github.event.repository.name }}.zip addons/sourcemod
 
       - name: Create GitHub release
         if: github.ref_name == 'master'
