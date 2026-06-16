@@ -73,6 +73,7 @@ public void OnPluginStart()
 	if (GetEngineVersion() != Engine_TF2)
 		SetFailState("This plugin is only compatible with Team Fortress 2");
 	
+	LoadTranslations("common.phrases");
 	LoadTranslations("tf-bhop.phrases");
 	
 	g_hMemoryPatches = new ArrayList(sizeof(MemoryPatchData));
@@ -229,6 +230,12 @@ void OnConVarChanged_EnableMemoryPatch(ConVar convar, const char[] oldValue, con
 
 Action ConCmd_ToggleAutoBunnyhopping(int client, int args)
 {
+	if (client == 0)
+	{
+		ReplyToCommand(client, "%t", "Command is in-game only");
+		return Plugin_Handled;
+	}
+
 	bool bValue = g_bDisabledAutoBhop[client] = !g_bDisabledAutoBhop[client];
 	
 	g_hCookieAutoJumpDisabled.SetInt(client, bValue);
