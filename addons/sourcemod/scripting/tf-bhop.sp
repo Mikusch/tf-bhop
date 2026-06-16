@@ -164,11 +164,10 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	{
 		if (buttons & IN_JUMP)
 		{
-			if (g_bInJumpRelease[client] && (CanAirDash(client) || CanDeployParachute(client)))
-			{
-				g_bInJumpRelease[client] = false;
-			}
-			else if (CanBunnyhop(client))
+			bool bWasInJumpRelease = g_bInJumpRelease[client];
+			g_bInJumpRelease[client] = false;
+
+			if (!(bWasInJumpRelease && (CanAirDash(client) || CanDeployParachute(client))) && CanBunnyhop(client))
 			{
 				g_bInTriggerPush = false;
 				
