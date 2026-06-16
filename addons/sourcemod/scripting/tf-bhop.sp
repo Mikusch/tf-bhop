@@ -332,7 +332,6 @@ void CreateMemoryPatch(GameData gameconf, const char[] name, ConVar convar)
 bool CanBunnyhop(int client)
 {
 	return !g_bDisabledAutoBhop[client]
-		&& !g_bInJumpRelease[client]
 		&& GetEntPropEnt(client, Prop_Data, "m_hVehicle") == -1
 		&& GetEntProp(client, Prop_Data, "m_nWaterLevel") < WL_Waist
 		&& GetEntityMoveType(client) != MOVETYPE_NONE
