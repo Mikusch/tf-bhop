@@ -263,7 +263,13 @@ bool HitTrigger(int entity)
 	{
 		float pushDir[3];
 		GetEntPropVector(entity, Prop_Data, "m_vecPushDir", pushDir);
-		if (pushDir[2] > 0.0)
+
+		float angles[3], fwd[3], right[3], up[3];
+		GetEntPropVector(entity, Prop_Data, "m_angAbsRotation", angles);
+		GetAngleVectors(angles, fwd, right, up);
+		float worldZ = pushDir[0] * fwd[2] - pushDir[1] * right[2] + pushDir[2] * up[2];
+
+		if (worldZ > 0.0)
 		{
 			Handle trace = TR_ClipCurrentRayToEntityEx(MASK_ALL, entity);
 			bool didHit = TR_DidHit(trace);
