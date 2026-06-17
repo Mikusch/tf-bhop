@@ -26,7 +26,7 @@
 #include <tf2attributes>
 #include <sourcescramble>
 
-#define PLUGIN_VERSION	"1.10.0"
+#define PLUGIN_VERSION	"1.10.1"
 
 enum
 {
