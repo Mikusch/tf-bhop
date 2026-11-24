@@ -75,7 +75,7 @@
 				"signature"	"CTFGameMovement::PreventBunnyJumping"
 				"linux"
 				{
-					"offset"	"22h"
+					"offset"	"2Eh"
 					"verify"	"\x75" // jnz
 					"patch"		"\xEB" // jmp
 				}
