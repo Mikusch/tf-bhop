@@ -53,7 +53,7 @@
 				}
 				"linux64"
 				{
-					"offset"	"D5h"
+					"offset"	"C3h"
 					"verify"	"\x74" // jz
 					"patch"		"\xEB" // jmp
 				}
